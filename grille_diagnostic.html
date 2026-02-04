@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grille Diagnostic Interactif - E32 MELEC</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 30px; text-align: center; }
+        .controls { padding: 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+        .level-btn { padding: 10px 20px; margin: 0 10px; border: 2px solid #007cba; background: white; border-radius: 25px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .level-btn.active { background: #007cba; color: white; }
+        .tree-container { padding: 30px; min-height: 600px; }
+        .node { padding: 20px; margin: 20px 0; border-radius: 12px; border-left: 6px solid #007cba; background: #f8f9fa; cursor: pointer; transition: all 0.3s; }
+        .node:hover { transform: translateX(10px); box-shadow: 0 5px 15px rgba(0,124,186,0.3); }
+        .node.selected { background: #d1ecf1; border-left-color: #28a745; }
+        .node.final { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .score { font-size: 24px; font-weight: bold; margin: 20px 0; padding: 15px; border-radius: 10px; text-align: center; }
+        .score.good { background: #d4edda; color: #155724; }
+        .score.bad { background: #f8d7da; color: #721c24; }
+        .measures { margin-top: 20px; }
+        .measure-input { width: 100px; margin: 5px; padding: 8px; border: 2px solid #dee2e6; border-radius: 5px; }
+        .help { background: #fff3cd; padding: 12px; border-radius: 8px; margin: 10px 0; font-style: italic; }
+        .btn { padding: 15px 30px; background: linear-gradient(45deg, #007cba, #0056b3); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; margin: 10px; transition: transform 0.2s; }
+        .btn:hover { transform: scale(1.05); }
+        .btn-success { background: linear-gradient(45deg, #28a745, #20c997); }
+        @media (max-width: 768px) { .node { margin: 10px 0; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 GRILLE DIAGNOSTIC INTERACTIF</h1>
+            <p>E32 BAC PRO MELEC - Arbre décisionnel maintenance corrective</p>
+            <div>
+                <button class="level-btn active" onclick="setLevel('guide')">👶 Guidé</button>
+                <button class="level-btn" onclick="setLevel('semi')">😐 Semi-guidé</button>
+                <button class="level-btn" onclick="setLevel('auto')">🚀 Autonome</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div style="float: left;">
+                <strong>Support : </strong>
+                <select id="supportType">
+                    <option>Prise 16A</option>
+                    <option>Coffret éclairage</option>
+                    <option>Moteur asynchrone</option>
+                    <option>Commande va-et-vient</option>
+                </select>
+            </div>
+            <div style="float: right;">
+                Score : <span id="currentScore">0</span>/100
+                <button class="btn" onclick="resetDiagnostic()">🔄 Nouvelle panne</button>
+                <button class="btn btn-success" onclick="exportPDF()">📄 Exporter diagnostic</button>
+            </div>
+        </div>
+
+        <div class="tree-container" id="treeContainer">
+            <!-- Arbre généré dynamiquement -->
+        </div>
+
+        <div class="score" id="finalScore"></div>
+    </div>
+
+    <script>
+        let currentLevel = 'guide';
+        let currentPath = [];
+        let score = 0;
+        let measures = {};
+
+        const diagnosticTree = {
+            symptomes: [
+                { id: 's1', text: 'Pas de tension du tout', next: ['no_alim', 'disj'] },
+                { id: 's2', text: 'Fonctionne par intermittence', next: ['contact', 'surcharge'] },
+                { id: 's3', text: 'Fonctionne mais chauffe', next: ['surcharge', 'court'] },
+                { id: 's4', text: 'Bruit anormal', next: ['mecanique', 'electrique'] }
+            ],
+            hypotheses: {
+                no_alim: { text: 'Pas d\'alimentation', tests: ['tension_disj', 'continuite'] },
+                disj: { text: 'Protection déclenchée', tests: ['court_circuit', 'surcharge'] },
+                contact: { text: 'Mauvais contact', tests: ['serrage', 'continuite'] },
+                surcharge: { text: 'Surcharge', tests: ['intensite', 'section'] },
+                court: { text: 'Court-circuit', tests: ['isolement'] },
+                mecanique: { text: 'Défaut mécanique', tests: ['visuel'] },
+                electrique: { text: 'Défaut électrique', tests: ['isolement', 'continuite'] }
+            }
+        };
+
+        function setLevel(level) {
+            currentLevel = level;
+            document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            generateTree();
+        }
+
+        function generateTree() {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '<h3>👂 Étape 1 : Identifier les symptômes</h3>';
+
+            diagnosticTree.symptomes.forEach(symp => {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.innerHTML = `<strong>${symp.text}</strong>`;
+                node.onclick = () => selectSymptom(symp.id);
+                container.appendChild(node);
+            });
+        }
+
+        function selectSymptom(symptomId) {
+            currentPath = [symptomId];
+            generateHypotheses();
+        }
+
+        function generateHypotheses() {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '<h3>🧠 Étape 2 : Formuler les hypothèses</h3>';
+
+            diagnosticTree.symptomes.find(s => s.id === currentPath[0]).next.forEach(hypoId => {
+                const hypo = diagnosticTree.hypotheses[hypoId];
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.innerHTML = `<strong>${hypo.text}</strong>`;
+                node.onclick = () => selectHypothesis(hypoId);
+                container.appendChild(node);
+            });
+        }
+
+        function selectHypothesis(hypoId) {
+            currentPath.push(hypoId);
+            generateTests();
+        }
+
+        function generateTests() {
+            const hypo = diagnosticTree.hypotheses[currentPath[1]];
+            const container = document.getElementById('treeContainer');
+
+            container.innerHTML = `
+                <h3>🧪 Étape 3 : Tests pour "${hypo.text}"</h3>
+                <div class="help">${currentLevel === 'guide' ? 'Cliquez sur le test le plus logique en 1er !' : ''}</div>
+                <div class="measures">
+                    <h4>Mesures à réaliser :</h4>
+                </div>
+            `;
+
+            hypo.tests.forEach(testId => {
+                const testNode = document.createElement('div');
+                testNode.className = 'node';
+                testNode.innerHTML = getTestHTML(testId);
+                testNode.onclick = () => performTest(testId);
+                container.querySelector('.measures').appendChild(testNode);
+            });
+        }
+
+        function getTestHTML(testId) {
+            const tests = {
+                tension_disj: 'Tension disjoncteur (multimètre)',
+                continuite: 'Continuité câblage (multimètre)',
+                court_circuit: 'Isolement (contrôleur)',
+                serrage: 'Contrôle serrage bornes (visuel + couple)',
+                intensite: 'Intensité (pince ampèremétrique)',
+                section: 'Section câbles (visuel)',
+                isolement: 'Résistance isolement (≥0.5 MΩ)',
+                visuel: 'Contrôle visuel complet'
+            };
+            return `<strong>${tests[testId]}</strong>`;
+        }
+
+        function performTest(testId) {
+            const container = document.getElementById('treeContainer');
+            const measureDiv = document.createElement('div');
+            measureDiv.innerHTML = `
+                <h4>${getTestHTML(testId)}</h4>
+                <label>Valeur mesurée : <input type="number" step="0.1" class="measure-input" id="m${testId}"></label>
+                <label><input type="checkbox" id="c${testId}"> Conforme</label>
+                <button class="btn" onclick="validateTest('${testId}')">✅ Valider test</button>
+            `;
+            container.appendChild(measureDiv);
+        }
+
+        function validateTest(testId) {
+            const value = document.getElementById(`m${testId}`).value;
+            const conforme = document.getElementById(`c${testId}`).checked;
+
+            if(conforme) score += 20;
+            else score += 5;
+
+            document.getElementById('currentScore').textContent = score;
+            generateConclusion();
+        }
+
+        function generateConclusion() {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML += `
+                <div class="node final">
+                    <h3>🎯 CONCLUSION DIAGNOSTIC</h3>
+                    <p>Cause probable : ${diagnosticTree.hypotheses[currentPath[1]].text}</p>
+                    <p>Score obtenu : <span id="finalScore">${score}</span>/100</p>
+                    <div class="score ${score >= 80 ? 'good' : 'bad'}">${score >= 80 ? '✅ Diagnostic parfait !' : '⚠️ Revoir la méthode'}</div>
+                </div>
+            `;
+
+            document.getElementById('finalScore').textContent = score;
+        }
+
+        function resetDiagnostic() {
+            currentPath = [];
+            score = 0;
+            document.getElementById('currentScore').textContent = '0';
+            generateTree();
+        }
+
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+
+            pdf.setFontSize(20);
+            pdf.text('GRILLE DIAGNOSTIC E32 MELEC', 20, 20);
+            pdf.text(`Support : ${document.getElementById('supportType').value}`, 20, 35);
+            pdf.text(`Score : ${score}/100`, 20, 50);
+            pdf.text(`Niveau : ${currentLevel}`, 20, 65);
+
+            pdf.save('Diagnostic_E32.pdf');
+        }
+
+        // Init
+        generateTree();
+    </script>
+</body>
+</html>
