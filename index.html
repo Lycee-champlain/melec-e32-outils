@@ -1,73 +1,76 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E32 Outils Interactifs - MELEC Terminale</title>
+    <title>Portail E32 MELEC | Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        * {margin:0;padding:0;box-sizing:border-box;}
-        body {font-family:'Segoe UI',Tahoma,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-        .container {background:white;max-width:600px;width:100%;border-radius:25px;box-shadow:0 25px 50px rgba(0,0,0,0.15);overflow:hidden;}
-        .header {background:linear-gradient(45deg,#2c3e50,#3498db);color:white;padding:40px 30px;text-align:center;}
-        .header h1 {font-size:2.5em;margin-bottom:10px;}
-        .header p {font-size:1.2em;opacity:0.9;}
-        .tools {padding:40px 30px;display:grid;gap:20px;}
-        .tool {padding:25px;background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:20px;border-left:6px solid #3498db;transition:all 0.3s;cursor:pointer;text-decoration:none;color:#2c3e50;display:flex;align-items:center;}
-        .tool:hover {transform:translateY(-5px);box-shadow:0 15px 35px rgba(52,152,219,0.3);}
-        .tool-icon {font-size:2.5em;margin-right:20px;}
-        .tool-text h3 {margin-bottom:5px;font-size:1.3em;}
-        .tool-text p {color:#7f8c8d;font-size:0.95em;}
-        .footer {background:#2c3e50;color:white;padding:25px;text-align:center;font-size:0.9em;}
-        @media (max-width:768px) {.header h1{font-size:2em;padding:0 20px;}.tools{padding:30px 20px;}}
+        :root { --primary: #2563eb; --dark: #0f172a; --white: #ffffff; --gray: #64748b; --light: #f1f5f9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        .navbar { background: var(--dark); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; color: var(--white); }
+        .brand { font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .brand span { color: var(--primary); }
+        
+        .hero { text-align: center; padding: 80px 20px; background: white; margin-bottom: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .hero h1 { font-size: 42px; margin-bottom: 15px; color: var(--dark); font-weight: 800; }
+        .hero p { color: var(--gray); font-size: 18px; max-width: 600px; margin: 0 auto; }
+
+        .grid-menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
+        
+        .card { background: var(--white); border-radius: 20px; padding: 30px; text-align: center; transition: all 0.3s; border: 1px solid #e2e8f0; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; }
+        .card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(37, 99, 235, 0.15); border-color: var(--primary); }
+        .icon { font-size: 50px; margin-bottom: 20px; background: #eff6ff; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--primary); transition: 0.3s; }
+        .card:hover .icon { background: var(--primary); color: var(--white); }
+        .title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+        .desc { color: var(--gray); font-size: 14px; line-height: 1.5; }
+
+        .footer { text-align: center; padding: 40px; color: var(--gray); font-size: 13px; margin-top: auto; border-top: 1px solid #e2e8f0; }
+        
+        @media (max-width: 768px) { .hero h1 { font-size: 32px; } .grid-menu { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>⚙️ E32 MAINTENANCE</h1>
-            <p>Outils interactifs BAC PRO MELEC Terminale</p>
-            <p><strong>TMELEC </strong> | Lycée Samuel de Champlain</p>
-        </div>
+    <nav class="navbar">
+        <div class="brand">⚡ MELEC <span>E32</span></div>
+        <div style="font-size:14px; opacity:0.8;">Lycée Samuel de Champlain</div>
+    </nav>
 
-        <div class="tools">
-            <a href="fiche_securite_b1vbr.html" class="tool">
-                <span class="tool-icon">🔐</span>
-                <div class="tool-text">
-                    <h3>Fiche sécurité B1V/BR</h3>
-                    <p>Analyse risques + signature électronique + PDF</p>
-                </div>
-            </a>
+    <div class="hero">
+        <h1>Plateforme de Maintenance</h1>
+        <p>Outils numériques pour l'épreuve E32 - BAC PRO MELEC. Choisissez une application ci-dessous pour commencer.</p>
+    </div>
 
-            <a href="mode_operatoire.html" class="tool">
-                <span class="tool-icon">⚙️</span>
-                <div class="tool-text">
-                    <h3>Mode opératoire 6 étapes</h3>
-                    <p>Progression verrouillée + timers + urgence sécurité</p>
-                </div>
-            </a>
+    <div class="grid-menu">
+        <a href="mode_operatoire.html" class="card">
+            <div class="icon">📝</div>
+            <div class="title">Mode Opératoire</div>
+            <div class="desc">Suivi d'intervention guidé étape par étape avec chrono et rapport PDF.</div>
+        </a>
 
-            <a href="grille_diagnostic.html" class="tool">
-                <span class="tool-icon">🔍</span>
-                <div class="tool-text">
-                    <h3>Grille diagnostic interactif</h3>
-                    <p>Arbre décisionnel + 3 niveaux + score automatique</p>
-                </div>
-            </a>
+        <a href="grille_diagnostic.html" class="card">
+            <div class="icon">🔍</div>
+            <div class="title">Diagnostic & Multimètre</div>
+            <div class="desc">Simulateur de pannes avec multimètre virtuel interactif.</div>
+        </a>
 
-            <a href="auto_evaluation.html" class="tool">
-                <span class="tool-icon">📊</span>
-                <div class="tool-text">
-                    <h3>Auto-évaluation C10-C13</h3>
-                    <p>Échelles 1-4 + vidéos aide + QR code prof</p>
-                </div>
-            </a>
-        </div>
+        <a href="fiche_securite_b1vbr.html" class="card">
+            <div class="icon">🔒</div>
+            <div class="title">Habilitation B1V/BR</div>
+            <div class="desc">Fiche de mise en sécurité et consignation électrique.</div>
+        </a>
 
-        <div class="footer">
-            <p>🚨 <strong>Sécurité avant tout !</strong> Signature obligatoire avant intervention.</p>
-            <p>Séquence E32 Maintenance | Février 2026</p>
-        </div>
+        <a href="auto_evaluation.html" class="card">
+            <div class="icon">📊</div>
+            <div class="title">Auto-Évaluation</div>
+            <div class="desc">Grille de compétences et calcul de note pour l'épreuve E32.</div>
+        </a>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 Lycée Samuel de Champlain - Section MELEC<br>Développé pour l'accompagnement pédagogique E32.
     </div>
 </body>
 </html>
