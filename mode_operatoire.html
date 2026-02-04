@@ -1,199 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mode Opératoire Maintenance - E32 MELEC</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { color: #2c3e50; font-size: 24px; margin-bottom: 10px; }
+        .progress-container { position: sticky; top: 0; background: white; z-index: 100; padding: 15px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .progress-bar { height: 10px; background: #e9ecef; border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #22c55e; width: 0%; transition: width 0.5s ease; }
+        .step { background: white; margin-bottom: 25px; padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s ease; opacity: 0.6; pointer-events: none; border-left: 5px solid #bdc3c7; }
+        .step.active { opacity: 1; pointer-events: all; border-left-color: #3498db; transform: scale(1.02); }
+        .step.completed { opacity: 0.8; border-left-color: #2ecc71; background: #f0fff4; }
+        .step-header { display: flex; align-items: center; margin-bottom: 20px; }
+        .step-number { background: #3498db; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; }
+        .step.completed .step-number { background: #2ecc71; }
+        h2 { font-size: 20px; color: #2c3e50; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; margin-top: 10px; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #2ecc71; color: white; width: 100%; margin-top: 20px; padding: 15px; font-size: 16px; }
+        .btn-success:hover { background: #27ae60; }
+        .btn-danger { background: #e74c3c; color: white; }
+        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; font-family: inherit; }
+        .checklist-item { display: flex; align-items: center; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .checklist-item input { transform: scale(1.5); margin-right: 15px; }
+        .timer { font-family: 'Consolas', monospace; font-size: 18px; color: #e67e22; margin-left: auto; background: #fff3e0; padding: 5px 10px; border-radius: 5px; }
+        .hypo-list { margin: 15px 0; }
+        .hypo-item { display: flex; gap: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="progress-container">
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <span id="progressText">Préparation</span>
+        <span id="totalTimer" style="font-weight:bold; color:#2c3e50;">00:00</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div class="header">
+    <h1>📝 Mode Opératoire E32</h1>
+    <p>Maintenance Corrective - Suivi d'intervention</p>
+</div>
+
+<!-- ÉTAPE 0 : PRÉPARATION -->
+<div class="step active" id="step0">
+    <div class="step-header">
+        <span class="step-number">0</span>
+        <h2>Préparation de l'intervention</h2>
+    </div>
+    <div>
+        <label>Nom de l'élève :</label>
+        <input type="text" id="eleveNom" placeholder="Votre nom...">
+        <label style="margin-top:10px; display:block;">Système / Support :</label>
+        <input type="text" id="systemeNom" placeholder="Ex: Malaxeur, TGBT...">
+    </div>
+    <button class="btn btn-success" onclick="validateStep0()">Démarrer l'intervention ▶</button>
+</div>
+
+<!-- ÉTAPE 1 : SÉCURITÉ -->
+<div class="step" id="step1">
+    <div class="step-header">
+        <span class="step-number">1</span>
+        <h2>Mise en sécurité (Consignation)</h2>
+        <div class="timer" id="timer1">00:00</div>
+    </div>
+    <div class="checklist-item">
+        <input type="checkbox" id="secu1" onchange="checkSecu()">
+        <label>Autorisation d'accès / Bon de travail signé</label>
+    </div>
+    <div class="checklist-item">
+        <input type="checkbox" id="secu2" onchange="checkSecu()">
+        <label>EPI portés (Gants, Écran facial, Tapis)</label>
+    </div>
+    <div class="checklist-item">
+        <input type="checkbox" id="secu3" onchange="checkSecu()">
+        <label>VAT effectuée (Vérification Absence Tension)</label>
+    </div>
+    <div id="btnSecuContainer"></div>
+</div>
+
+<!-- ÉTAPE 2 : ANALYSE -->
+<div class="step" id="step2">
+    <div class="step-header">
+        <span class="step-number">2</span>
+        <h2>Analyse du dysfonctionnement</h2>
+        <div class="timer" id="timer2">00:00</div>
+    </div>
+    <p>Décrivez les symptômes observés et votre analyse :</p>
+    <textarea id="analyseText" rows="4" placeholder="Le moteur grogne mais ne tourne pas..."></textarea>
+    <button class="btn btn-success" onclick="validateStep2()">✅ Valider l'analyse et continuer</button>
+</div>
+
+<!-- ÉTAPE 3 : HYPOTHÈSES -->
+<div class="step" id="step3">
+    <div class="step-header">
+        <span class="step-number">3</span>
+        <h2>Hypothèses de pannes</h2>
+        <div class="timer" id="timer3">00:00</div>
+    </div>
+    <div class="hypo-list" id="hypoContainer">
+        <div class="hypo-item">
+            <input type="text" placeholder="Hypothèse 1 (ex: Fusible HS)">
+        </div>
+    </div>
+    <button class="btn btn-primary" onclick="addHypo()">+ Ajouter une hypothèse</button>
+    <button class="btn btn-success" onclick="validateStep3()">✅ Valider les hypothèses</button>
+</div>
+
+<!-- ÉTAPE 4 : MESURES -->
+<div class="step" id="step4">
+    <div class="step-header">
+        <span class="step-number">4</span>
+        <h2>Mesures et Tests</h2>
+        <div class="timer" id="timer4">00:00</div>
+    </div>
+    <p>Notez vos mesures significatives :</p>
+    <div class="hypo-list" id="mesuresContainer">
+        <div class="hypo-item">
+            <input type="text" placeholder="Test effectué (ex: Tension U1-U2)">
+            <input type="text" placeholder="Valeur (ex: 230V)" style="width:100px;">
+        </div>
+    </div>
+    <button class="btn btn-primary" onclick="addMesure()">+ Ajouter une mesure</button>
+    <button class="btn btn-success" onclick="validateStep4()">✅ Valider les mesures</button>
+</div>
+
+<!-- ÉTAPE 5 : REMISE EN SERVICE -->
+<div class="step" id="step5">
+    <div class="step-header">
+        <span class="step-number">5</span>
+        <h2>Remise en service</h2>
+        <div class="timer" id="timer5">00:00</div>
+    </div>
+    <div class="checklist-item">
+        <input type="checkbox" id="remise1">
+        <label>Outils retirés de la zone</label>
+    </div>
+    <div class="checklist-item">
+        <input type="checkbox" id="remise2">
+        <label>Protections remises en place</label>
+    </div>
+    <div class="checklist-item">
+        <input type="checkbox" id="remise3">
+        <label>Essai de fonctionnement OK</label>
+    </div>
+    <button class="btn btn-success" onclick="validateStep5()">🏁 Terminer l'intervention</button>
+</div>
+
+<!-- ÉTAPE 6 : RAPPORT -->
+<div class="step" id="step6">
+    <div class="step-header">
+        <span class="step-number">6</span>
+        <h2>Rapport d'intervention</h2>
+    </div>
+    <div style="background:#d4edda; color:#155724; padding:20px; border-radius:10px; text-align:center;">
+        <h3>🎉 Intervention terminée !</h3>
+        <p>Temps total : <span id="finalTime"></span></p>
+    </div>
+    <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="generatePDF()">📄 Télécharger le rapport PDF</button>
+</div>
+
 <script>
     let currentStep = 0;
-    let totalTime = 0;
-    let timers = {};
     let startTime = Date.now();
-    const stepIds = ['step0', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
+    let stepTimers = {};
 
     // Timer global
     setInterval(() => {
-        totalTime = Math.floor((Date.now() - startTime) / 1000);
-        document.getElementById('totalTimer').textContent = "Temps total : " + formatTime(totalTime);
+        const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('totalTimer').textContent = formatTime(totalSeconds);
+        
+        // Timer de l'étape active
+        if(currentStep > 0 && currentStep < 6) {
+            const el = document.getElementById('timer' + currentStep);
+            if(el) {
+                if(!stepTimers[currentStep]) stepTimers[currentStep] = Date.now();
+                const stepSeconds = Math.floor((Date.now() - stepTimers[currentStep]) / 1000);
+                el.textContent = formatTime(stepSeconds);
+            }
+        }
     }, 1000);
 
-    function formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
     }
 
-    // Gestion Étape 1 : Sécurité
-    function checkSecurity1() {
-        const checks = ['s1-1', 's1-2', 's1-3'];
-        const complete = checks.every(id => document.getElementById(id).checked);
-        const feedback = document.getElementById('feedback1');
-        
-        if (complete) {
-            feedback.innerHTML = '<div class="feedback success">Sécurité validée ! Passage à l\'étape 2...</div>';
-            setTimeout(() => unlockStep(2), 1000);
-        } else {
-            feedback.innerHTML = '';
-        }
-    }
-
-    // Gestion Étape 3 : Hypothèses (CORRIGÉE)
-    function addHypo() {
-        const div = document.createElement('div');
-        div.className = 'hypo';
-        div.innerHTML = `
-            <input type="text" placeholder="Hypothèse..." class="hypo-input" style="width:70%; padding:8px; margin:5px 0;">
-            <button class="btn btn-danger" onclick="deleteHypo(this)" style="padding:5px 10px;">X</button>
-        `;
-        document.getElementById('hypotheses').appendChild(div);
-        checkHypoCount();
-    }
-
-    function deleteHypo(btn) {
-        btn.parentElement.remove();
-        checkHypoCount();
-    }
-
-    function checkHypoCount() {
-        // Débloque l'étape 4 si au moins 1 hypothèse est présente
-        const count = document.querySelectorAll('.hypo').length;
-        const btnNext = document.getElementById('btnNextStep3');
-        
-        if (!btnNext && count > 0) {
-            // Créer le bouton de validation s'il n'existe pas encore
-            const btn = document.createElement('button');
-            btn.id = 'btnNextStep3';
-            btn.className = 'btn btn-success';
-            btn.textContent = 'VALIDER HYPOTHÈSES -> ÉTAPE 4';
-            btn.onclick = () => unlockStep(4);
-            document.querySelector('#step3 .actions').appendChild(btn);
-        } else if (btnNext && count === 0) {
-            btnNext.remove();
-        }
-    }
-
-    // Système de déverrouillage des étapes
-    function unlockStep(n) {
-        if (n <= currentStep) return; // Déjà débloqué
-        
-        // Marquer l'étape précédente comme terminée
-        if (n > 0) {
-            document.getElementById(stepIds[n-1]).classList.add('completed');
-            document.getElementById(stepIds[n-1]).classList.remove('locked');
-            stopStepTimer(n-1);
+    function goToStep(n) {
+        // Marquer l'étape actuelle comme terminée
+        const currentEl = document.getElementById('step' + currentStep);
+        if(currentEl) {
+            currentEl.classList.remove('active');
+            currentEl.classList.add('completed');
         }
 
-        // Débloquer la nouvelle étape
-        const nextStepEl = document.getElementById(stepIds[n]);
-        if (nextStepEl) {
-            nextStepEl.classList.remove('locked');
-            // Scroll doux vers l'étape
-            nextStepEl.scrollIntoView({behavior: 'smooth'});
-            startStepTimer(n);
-            currentStep = n;
-            updateProgress();
+        // Activer la nouvelle étape
+        currentStep = n;
+        const nextEl = document.getElementById('step' + n);
+        if(nextEl) {
+            nextEl.classList.add('active');
+            nextEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Init timer étape
+            stepTimers[n] = Date.now();
         }
+
+        // Barre de progression
+        const pct = (n / 6) * 100;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = `Étape ${n} / 6`;
     }
 
-    // Démarrage initial
-    function startStep1() {
-        const nom = document.getElementById('nomEtape0').value;
-        if(nom.length < 2) {
-            alert("Merci d'indiquer votre nom avant de commencer.");
+    // --- VALIDATIONS ---
+
+    function validateStep0() {
+        if(document.getElementById('eleveNom').value.length < 2) {
+            alert("Merci d'indiquer votre nom.");
             return;
         }
-        unlockStep(1);
+        startTime = Date.now(); // Reset timer
+        goToStep(1);
     }
 
-    // Timers par étape
-    function startStepTimer(stepNum) {
-        if (timers[stepNum]) return;
+    function checkSecu() {
+        const s1 = document.getElementById('secu1').checked;
+        const s2 = document.getElementById('secu2').checked;
+        const s3 = document.getElementById('secu3').checked;
         
-        const start = Date.now();
-        timers[stepNum] = setInterval(() => {
-            const el = document.getElementById('timer' + stepNum);
-            if (el) {
-                const elapsed = Math.floor((Date.now() - start) / 1000);
-                el.textContent = "Étape " + stepNum + " : " + formatTime(elapsed);
-            }
-        }, 1000);
-    }
-
-    function stopStepTimer(stepNum) {
-        if (timers[stepNum]) {
-            clearInterval(timers[stepNum]);
-            // On pourrait geler l'affichage ici
+        const container = document.getElementById('btnSecuContainer');
+        if(s1 && s2 && s3) {
+            container.innerHTML = '<button class="btn btn-success" onclick="goToStep(2)">✅ Sécurité OK - Continuer</button>';
+        } else {
+            container.innerHTML = '';
         }
     }
 
-    function updateProgress() {
-        const pct = (currentStep / 6) * 100;
-        document.getElementById('progressFill').style.width = pct + '%';
-        document.getElementById('progressText').textContent = 'Étape ' + currentStep + '/6';
+    function validateStep2() {
+        const txt = document.getElementById('analyseText').value;
+        if(txt.length < 5) {
+            alert("Décrivez votre analyse (min 5 caractères).");
+            return;
+        }
+        goToStep(3);
     }
 
-    // Étape 4 : Déblocage auto après saisie mesures (optionnel)
-    // Ajoute un bouton manuel pour passer à l'étape 5
-    // Insère ce bouton dans le HTML de l'étape 4 si absent
-
-    // Fonction d'urgence
-    function emergencyStop() {
-        document.body.innerHTML = '<h1 style="color:red;text-align:center;margin-top:20%">⛔ ARRÊT D\'URGENCE ENCLENCHÉ ⛔<br><br>Appelez le professeur immédiatement.</h1>';
+    function addHypo() {
+        const div = document.createElement('div');
+        div.className = 'hypo-item';
+        div.innerHTML = '<input type="text" placeholder="Nouvelle hypothèse...">';
+        document.getElementById('hypoContainer').appendChild(div);
     }
 
-    // PDF Export (simplifié)
-    async function exportPDF() {
+    function validateStep3() {
+        goToStep(4); // Pas de blocage strict, on fait confiance
+    }
+
+    function addMesure() {
+        const div = document.createElement('div');
+        div.className = 'hypo-item';
+        div.innerHTML = '<input type="text" placeholder="Test..."><input type="text" placeholder="Valeur" style="width:100px;">';
+        document.getElementById('mesuresContainer').appendChild(div);
+    }
+
+    function validateStep4() {
+        goToStep(5);
+    }
+
+    function validateStep5() {
+        const r1 = document.getElementById('remise1').checked;
+        const r2 = document.getElementById('remise2').checked;
+        const r3 = document.getElementById('remise3').checked;
+        
+        if(!r1 || !r2 || !r3) {
+            if(!confirm("Certains points de remise en service ne sont pas cochés. Terminer quand même ?")) return;
+        }
+        
+        document.getElementById('finalTime').textContent = document.getElementById('totalTimer').textContent;
+        goToStep(6);
+    }
+
+    // PDF EXPORT
+    async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        doc.setFontSize(22);
+        doc.setFontSize(20);
         doc.text("RAPPORT D'INTERVENTION E32", 20, 20);
         
         doc.setFontSize(12);
-        doc.text("Élève : " + document.getElementById('nomEtape0').value, 20, 40);
-        doc.text("Temps total : " + formatTime(totalTime), 20, 50);
+        doc.text(`Technicien : ${document.getElementById('eleveNom').value}`, 20, 40);
+        doc.text(`Support : ${document.getElementById('systemeNom').value}`, 20, 50);
+        doc.text(`Temps total : ${document.getElementById('finalTime').textContent}`, 20, 60);
         
-        const analyse = document.getElementById('analyse').value;
-        doc.text("Analyse : " + analyse, 20, 70);
+        doc.text("--- Analyse ---", 20, 80);
+        doc.text(document.getElementById('analyseText').value, 20, 90);
         
         doc.save("Rapport_E32.pdf");
     }
-
-    // Initialisation
-    // Ajout des boutons manquants dans le HTML via JS pour corriger l'existant
-    window.onload = function() {
-        // Ajouter un container d'actions à l'étape 3 si absent
-        if (!document.querySelector('#step3 .actions')) {
-            const div = document.createElement('div');
-            div.className = 'actions';
-            document.getElementById('step3').appendChild(div);
-        }
-        
-        // Ajout bouton validation étape 2 (Analyse)
-        const step2 = document.getElementById('step2');
-        if (!step2.querySelector('.btn-success')) {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-success';
-            btn.textContent = 'Valider Analyse -> Étape 3';
-            btn.style.marginTop = '10px';
-            btn.onclick = () => unlockStep(3);
-            step2.appendChild(btn);
-        }
-
-        // Ajout bouton validation étape 4 (Mesures)
-        const step4 = document.getElementById('step4');
-        if (!step4.querySelector('.btn-success')) {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-success';
-            btn.textContent = 'Valider Mesures -> Étape 5';
-            btn.style.marginTop = '10px';
-            btn.onclick = () => unlockStep(5);
-            step4.appendChild(btn);
-        }
-
-        // Ajout bouton validation étape 5 (Remise en service)
-        const step5 = document.getElementById('step5');
-        if (!step5.querySelector('.btn-success')) {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-success';
-            btn.textContent = 'Valider Essais -> Étape 6';
-            btn.style.marginTop = '10px';
-            btn.onclick = () => unlockStep(6);
-            step5.appendChild(btn);
-        }
-    };
 </script>
+
+</body>
+</html>
