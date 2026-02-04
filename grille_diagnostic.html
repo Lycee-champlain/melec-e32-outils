@@ -1,28 +1,26 @@
 
 <!DOCTYPE html>
-<html lang=\"fr\">
+<html lang="fr">
 <head>
-    <meta charset=\"UTF-8\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-    <title>Grille Diagnostic Interactif - E32 MELEC</title>
-    <script src=\"https://html2canvas.hertzen.com/dist/html2canvas.min.js\"></script>
-    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js\"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grille Diagnostic + Multimètre - E32 MELEC</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e5e7eb; padding: 20px; min-height: 100vh; }
+        body { font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e5e7eb; padding: 20px; min-height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; background: #0b1120; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #1f293b; }
         .header { background: linear-gradient(135deg, #1d4ed8, #22c55e); color: white; padding: 25px 30px; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { font-size: 22px; margin: 0; }
-        .scenario-select { padding: 15px 20px; background: #020617; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f293b; }
-        .scenario-select select { padding: 10px 15px; border-radius: 8px; border: 1px solid #4b5563; background: #020617; color: #e5e7eb; font-size: 14px; min-width: 300px; }
-        .step-badge { background: #059669; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .content { display: flex; flex-wrap: wrap; }
+        .scenario-select { padding: 15px 20px; background: #020617; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f293b; flex-wrap: wrap; gap: 10px; }
+        .scenario-select select { padding: 10px 15px; border-radius: 8px; border: 1px solid #4b5563; background: #020617; color: #e5e7eb; font-size: 14px; min-width: 280px; }
+        .step-badge { background: #059669; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .content { display: flex; }
         .left, .right { padding: 25px; }
-        .left { flex: 1 1 400px; border-right: 1px solid #1f293b; }
-        .right { flex: 1 1 400px; background: #020617; }
-        h2 { color: #e5e7eb; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .left { flex: 1; border-right: 1px solid #1f293b; min-width: 380px; }
+        .right { flex: 1; background: #020617; min-width: 380px; }
+        h2 { color: #e5e7eb; font-size: 18px; margin-bottom: 15px; }
         .card { background: #020617; border-radius: 12px; padding: 18px; margin-bottom: 20px; border: 1px solid #1f293b; }
-        .btn { padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; margin: 5px; transition: all 0.3s; }
+        .btn { padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; margin: 5px; transition: all 0.3s; width: 100%; }
         .btn-primary { background: #2563eb; color: white; }
         .btn-primary:hover { background: #1d4ed8; }
         .btn-secondary { background: transparent; color: #e5e7eb; border: 2px solid #4b5563; }
@@ -30,89 +28,91 @@
         .btn-success { background: #16a34a; color: white; }
         .multimeter { background: #0f172a; border-radius: 16px; padding: 20px; border: 2px solid #1f293b; margin: 15px 0; }
         .multimeter-screen { background: #111827; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-        .screen-mode { font-size: 28px; font-family: 'Consolas', monospace; color: #22c55e; margin: 10px 0; }
-        .screen-value { font-size: 36px; font-family: 'Consolas', monospace; color: #facc15; font-weight: bold; }
-        .input-group { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
-        .input-group label { min-width: 140px; color: #9ca3af; font-size: 14px; }
-        .input-group input, .input-group select { padding: 10px 12px; border-radius: 8px; border: 1px solid #4b5563; background: #020617; color: #e5e7eb; font-size: 14px; flex: 1; max-width: 120px; }
-        .input-group button { padding: 10px 16px; flex-shrink: 0; }
-        .feedback { margin-top: 15px; padding: 12px; border-radius: 10px; font-weight: 500; }
+        .screen-mode { font-size: 24px; font-family: \'Consolas\', monospace; color: #22c55e; margin: 10px 0; }
+        .screen-value { font-size: 32px; font-family: \'Consolas\', monospace; color: #facc15; font-weight: bold; }
+        .input-group { display: flex; align-items: center; gap: 12px; margin: 15px 0; flex-wrap: wrap; }
+        .input-group label { min-width: 140px; color: #9ca3af; font-size: 14px; font-weight: 500; }
+        .input-group input, .input-group select { padding: 12px 14px; border-radius: 8px; border: 1px solid #4b5563; background: #020617; color: #e5e7eb; font-size: 15px; }
+        .input-group input[type=\\"number\\"] { width: 110px; }
+        .input-group select { width: 110px; }
+        .input-group button { padding: 12px 20px; flex-shrink: 0; width: auto; }
+        .feedback { margin-top: 15px; padding: 15px; border-radius: 12px; font-weight: 500; font-size: 14px; }
         .feedback-ok { background: rgba(22, 163, 74, 0.2); color: #bbf7d0; border: 1px solid #16a34a; }
         .feedback-bad { background: rgba(185, 28, 28, 0.2); color: #fecaca; border: 1px solid #b91c1c; }
-        .log { max-height: 250px; overflow-y: auto; font-size: 13px; padding: 10px; background: #020617; border-radius: 10px; border: 1px solid #1f293b; }
-        .log-entry { padding: 8px 0; border-bottom: 1px solid #1f293b; }
+        .log { max-height: 300px; overflow-y: auto; font-size: 13px; padding: 15px; background: #020617; border-radius: 12px; border: 1px solid #1f293b; }
+        .log-entry { padding: 10px 0; border-bottom: 1px solid #1f293b; }
         .log-entry:last-child { border-bottom: none; }
-        .conclusion { margin-top: 15px; padding: 15px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid #2563eb; }
-        .hypo-correct { background: #d1fae5 !important; color: #065f46 !important; }
-        @media (max-width: 900px) { .content { flex-direction: column; } .left { border-right: none; border-bottom: 1px solid #1f293b; } }
+        .conclusion { margin-top: 20px; padding: 20px; border-radius: 15px; background: rgba(59, 130, 246, 0.15); border: 2px solid #2563eb; }
+        .hypo-correct { background: #d1fae5 !important; color: #065f46 !important; border-color: #10b981 !important; }
+        @media (max-width: 900px) { .content { flex-direction: column; } .left { border-right: none; border-bottom: 1px solid #1f293b; min-width: auto; } .right { min-width: auto; } .input-group { flex-direction: column; align-items: stretch; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div class=\\"container\\">
+        <div class=\\"header\\">
             <div>
                 <h1>🔍 Diagnostic + Multimètre virtuel</h1>
-                <p>E32 Maintenance corrective - BAC PRO MELEC</p>
+                <p>E32 Maintenance corrective - BAC PRO MELEC Terminale</p>
             </div>
-            <button class="btn btn-secondary" onclick="resetScenario()">🔄 Nouvelle panne</button>
+            <button class=\\"btn btn-secondary\\" onclick=\\"resetScenario()\\">🔄 Nouvelle panne</button>
         </div>
 
-        <div class="scenario-select">
+        <div class=\\"scenario-select\\">
             <div>
-                <label style="font-size: 14px;">Choisir la panne :</label>
-                <select id="scenarioSelect" onchange="loadScenario()">
-                    <option value="prise">🚿 Prise 16A atelier HS</option>
-                    <option value="moteur">🌀 Moteur VMC ne démarre pas</option>
-                    <option value="eclairage">💡 Va-et-vient éclairage HS</option>
+                <label style=\\"font-size: 14px; margin-right: 10px;\\">Choisir la panne :</label>
+                <select id=\\"scenarioSelect\\" onchange=\\"loadScenario()\\">
+                    <option value=\\"prise\\">🚿 Prise 16A atelier HS</option>
+                    <option value=\\"moteur\\">🌀 Moteur VMC ne démarre pas</option>
+                    <option value=\\"eclairage\\">💡 Va-et-vient éclairage HS</option>
                 </select>
             </div>
-            <div class="step-badge">Étape : <span id="stepLabel">1/4 - Symptômes</span></div>
+            <div class=\\"step-badge\\">Étape : <span id=\\"stepLabel\\">1/4 - Symptômes</span></div>
         </div>
 
-        <div class="content">
-            <div class="left">
-                <div class="card">
+        <div class=\\"content\\">
+            <div class=\\"left\\">
+                <div class=\\"card\\">
                     <h2>📋 Symptômes observés</h2>
-                    <div id="symptomesCard"></div>
+                    <div id=\\"symptomesCard\\"></div>
                 </div>
 
-                <div class="card">
+                <div class=\\"card\\">
                     <h2>🧠 Hypothèse sélectionnée</h2>
-                    <div id="hypothesesCard"></div>
+                    <div id=\\"hypothesesCard\\"></div>
                 </div>
 
-                <div class="card">
+                <div class=\\"card\\">
                     <h2>🧪 Tests disponibles</h2>
-                    <div id="testsCard"></div>
+                    <div id=\\"testsCard\\"></div>
                 </div>
             </div>
 
-            <div class="right">
-                <div class="card">
+            <div class=\\"right\\">
+                <div class=\\"card\\">
                     <h2>⚡ Multimètre virtuel</h2>
-                    <div class="multimeter">
-                        <div class="multimeter-screen">
-                            <div class="screen-mode" id="screenMode">Sélectionnez mode</div>
-                            <div class="screen-value" id="screenValue">0.00</div>
-                            <div style="font-size:12px;color:#9ca3af;">Valeur mesurée en temps réel</div>
+                    <div class=\\"multimeter\\">
+                        <div class=\\"multimeter-screen\\">
+                            <div class=\\"screen-mode\\" id=\\"screenMode\\">Mode sélectionné</div>
+                            <div class=\\"screen-value\\" id=\\"screenValue\\">0.00</div>
+                            <div style=\\"font-size:12px;color:#9ca3af;\\">Valeur mesurée temps réel</div>
                         </div>
 
-                        <div class="multimeter-controls">
-                            <div class="input-group">
+                        <div class=\\"multimeter-controls\\">
+                            <div class=\\"input-group\\">
                                 <label>Type de mesure :</label>
-                                <select id="mesureType" onchange="updateMode()">
-                                    <option value="">---</option>
-                                    <option value="tension">Tension (V)</option>
-                                    <option value="intensite">Intensité (A)</option>
-                                    <option value="isolement">Isolation (MΩ)</option>
-                                    <option value="continuite">Continuité (kΩ)</option>
+                                <select id=\\"mesureType\\" onchange=\\"updateMode()\\">
+                                    <option value=\\"\\">--- Sélectionnez ---</option>
+                                    <option value=\\"tension\\">Tension (V)</option>
+                                    <option value=\\"intensite\\">Intensité (A)</option>
+                                    <option value=\\"isolement\\">Isolation (MΩ)</option>
+                                    <option value=\\"continuite\\">Continuité (kΩ)</option>
                                 </select>
                             </div>
 
-                            <div class="input-group">
+                            <div class=\\"input-group\\">
                                 <label>Valeur attendue :</label>
-                                <input type="number" id="valAttendue" step="0.01" placeholder="230" min="0">
-                                <select id="unitAttendue">
+                                <input type=\\"number\\" id=\\"valAttendue\\" step=\\"0.01\\" placeholder=\\"230\\" min=\\"0\\" style=\\"width:100px;\\">
+                                <select id=\\"unitAttendue\\">
                                     <option>V</option>
                                     <option>A</option>
                                     <option>MΩ</option>
@@ -120,10 +120,10 @@
                                 </select>
                             </div>
 
-                            <div class="input-group">
+                            <div class=\\"input-group\\">
                                 <label>Valeur mesurée :</label>
-                                <input type="number" id="valMesuree" step="0.01" placeholder="0" min="0" oninput="updateScreen()">
-                                <select id="unitMesuree" onchange="updateScreen()">
+                                <input type=\\"number\\" id=\\"valMesuree\\" step=\\"0.01\\" placeholder=\\"0\\" min=\\"0\\" oninput=\\"updateScreen()\\" style=\\"width:100px;\\">
+                                <select id=\\"unitMesuree\\" onchange=\\"updateScreen()\\">
                                     <option>V</option>
                                     <option>A</option>
                                     <option>MΩ</option>
@@ -131,23 +131,23 @@
                                 </select>
                             </div>
 
-                            <div class="input-group">
+                            <div class=\\"input-group\\">
                                 <label>Tolérance :</label>
-                                <input type="number" id="tolerance" value="5" step="1" min="0" max="50" style="width:80px;"> %
-                                <button class="btn btn-primary" onclick="validerMesure()">✅ Valider mesure</button>
+                                <input type=\\"number\\" id=\\"tolerance\\" value=\\"5\\" step=\\"1\\" min=\\"0\\" max=\\"50\\" style=\\"width:80px;\\"> %
+                                <button class=\\"btn btn-primary\\" onclick=\\"validerMesure()\\">✅ Valider mesure</button>
                             </div>
 
-                            <div id="measureFeedback" style="margin-top:15px;"></div>
+                            <div id=\\"measureFeedback\\"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
+                <div class=\\"card\\">
                     <h2>📊 Historique des tests</h2>
-                    <div class="log" id="logTests"></div>
+                    <div class=\\"log\\" id=\\"logTests\\"></div>
                 </div>
 
-                <div class="card" id="conclusionBloc" style="display:none;">
+                <div class=\\"card\\" id=\\"conclusionBloc\\" style=\\"display:none;\\">
                     <h2>🎯 Conclusion diagnostic</h2>
                 </div>
             </div>
@@ -157,7 +157,7 @@
     <script>
         const scenarios = {
             prise: {
-                symptomes: \"Prise 16A atelier ne fonctionne plus depuis ce matin. Autres prises OK. Disjoncteur enclenché.\",
+                symptomes: 'Prise 16A atelier ne fonctionne plus depuis ce matin. Autres prises circuit OK. Disjoncteur enclenché.',
                 hypotheses: [
                     { id: 'h1', text: 'Borne desserrée dans la prise', correct: true },
                     { id: 'h2', text: 'Disjoncteur général HS', correct: false },
@@ -168,10 +168,10 @@
                     { id: 't2', text: 'Continuité phase prise', type: 'continuite', attendu: 0.1, unite: 'kΩ', valeurReelle: 15 },
                     { id: 't3', text: 'Isolement prise-ter Ascertain', type: 'isolement', attendu: 1, unite: 'MΩ', valeurReelle: 0.8 }
                 ],
-                conclusion: \"Borne desserrée dans la prise. Resserrer + tester.\"
+                conclusion: 'Borne desserrée dans la prise. Resserrer + tester.'
             },
             moteur: {
-                symptomes: \"Moteur VMC ne démarre plus. Disjoncteur OK. Odeur suspecte hier.\",
+                symptomes: 'Moteur VMC ne démarre plus. Disjoncteur OK. Odeur suspecte hier.',
                 hypotheses: [
                     { id: 'h1', text: 'Condensateur permanent HS', correct: true },
                     { id: 'h2', text: 'Protection thermique', correct: false },
@@ -182,10 +182,10 @@
                     { id: 't2', text: 'Isolement enroulements', type: 'isolement', attendu: 1, unite: 'MΩ', valeurReelle: 0.3 },
                     { id: 't3', text: 'Continuité condensateur', type: 'continuite', attendu: 0.1, unite: 'kΩ', valeurReelle: 999 }
                 ],
-                conclusion: \"Condensateur HS. Remplacer par référence identique.\"
+                conclusion: 'Condensateur HS. Remplacer par référence identique.'
             },
             eclairage: {
-                symptomes: \"Va-et-vient éclairage couloir HS. Lampes neuves. Disjoncteur OK.\",
+                symptomes: 'Va-et-vient éclairage couloir HS. Lampes neuves. Disjoncteur OK.',
                 hypotheses: [
                     { id: 'h1', text: 'Fil navette coupé', correct: true },
                     { id: 'h2', text: 'Interrupteur HS', correct: false },
@@ -196,7 +196,7 @@
                     { id: 't2', text: 'Continuité fil navette', type: 'continuite', attendu: 0.1, unite: 'kΩ', valeurReelle: 9999 },
                     { id: 't3', text: 'Continuité interrupteurs', type: 'continuite', attendu: 0.1, unite: 'kΩ', valeurReelle: 0.05 }
                 ],
-                conclusion: \"Fil navette coupé. Localiser + épisser/réparer.\"
+                conclusion: 'Fil navette coupé. Localiser + épisser/réparer.'
             }
         };
 
@@ -209,54 +209,67 @@
             currentScenario = document.getElementById('scenarioSelect').value;
             resetDiagnostic();
             renderSymptomes();
+            renderHypotheses();
+            renderTests();
         }
 
         function renderSymptomes() {
             const sc = scenarios[currentScenario];
             document.getElementById('symptomesCard').innerHTML = `
-                <div class=\"badge badge-sympt\">SYMPTÔMES</div>
-                <p>${sc.symptomes}</p>
+                <div style=\\"background:#1e40af;padding:6px 12px;border-radius:999px;font-size:12px;display:inline-block;margin-bottom:10px;\\">
+                    SYMPTÔMES
+                </div>
+                <p style=\\"line-height:1.5;\\">${sc.symptomes}</p>
             `;
         }
 
         function renderHypotheses() {
             const sc = scenarios[currentScenario];
-            let html = '<p>Choisissez l\'hypothèse la plus probable :</p>';
+            let html = '<p>Choisissez l\\'hypothèse la plus probable :</p>';
             sc.hypotheses.forEach(h => {
-                html += `<button class=\"btn btn-secondary\" onclick=\"selectHypothesis('${h.id}', '${h.text}')\" style=\"width:100%;margin:4px 0;\">${h.text}</button>`;
+                html += `<button class=\\"btn btn-secondary\\" onclick=\\"selectHypothesis('${h.id}', '${h.text.replace(/'/g, "\\'")}')\\" style=\\"margin:4px 0;\\">${h.text}</button>`;
             });
             document.getElementById('hypothesesCard').innerHTML = html;
         }
 
         function renderTests() {
             const sc = scenarios[currentScenario];
-            let html = '<p>Test à effectuer :</p>';
+            let html = '<p>Choisissez le test à effectuer :</p>';
             sc.tests.forEach(t => {
-                html += `<button class=\"btn btn-secondary\" onclick=\"selectTest('${t.id}', '${t.text}')\" style=\"width:100%;margin:4px 0;\">${t.text}</button>`;
+                html += `<button class=\\"btn btn-secondary\\" onclick=\\"selectTest('${t.id}', '${t.text.replace(/'/g, "\\'")}')\\" style=\\"margin:4px 0;\\">${t.text}</button>`;
             });
             document.getElementById('testsCard').innerHTML = html;
         }
 
         function selectHypothesis(id, text) {
             chosenHypothesis = id;
-            document.getElementById('hypothesesCard').innerHTML = `<div class=\"hypo-correct\"><strong>Hypothèse : ${text}</strong></div>`;
+            document.getElementById('hypothesesCard').innerHTML = `
+                <div style=\\"background:#d1fae5;color:#065f46;padding:15px;border-radius:12px;border-left:5px solid #10b981;\\">
+                    <strong>Hypothèse sélectionnée :</strong><br>${text}
+                </div>
+            `;
             renderTests();
         }
 
         function selectTest(id, text) {
             chosenTest = id;
-            document.getElementById('testsCard').innerHTML = `<div><strong>Test sélectionné : ${text}</strong></div><p>Configurez le multimètre et saisissez la mesure.</p>`;
+            document.getElementById('testsCard').innerHTML = `
+                <div style=\\"background:#fef3c7;color:#92400e;padding:15px;border-radius:12px;border-left:5px solid #f59e0b;\\">
+                    <strong>Test sélectionné :</strong><br>${text}<br>
+                    <small>Configurez maintenant le multimètre.</small>
+                </div>
+            `;
         }
 
         function updateMode() {
             const type = document.getElementById('mesureType').value;
-            if (type) {
-                const modes = {
-                    tension: 'Tension',
-                    intensite: 'Intensité', 
-                    isolement: 'Isolation',
-                    continuite: 'Continuité'
-                };
+            const modes = {
+                tension: 'Tension AC',
+                intensite: 'Intensité AC', 
+                isolement: 'Isolation 500V',
+                continuite: 'Continuité'
+            };
+            if (type && modes[type]) {
                 document.getElementById('screenMode').textContent = modes[type];
             }
         }
@@ -264,30 +277,38 @@
         function updateScreen() {
             const val = parseFloat(document.getElementById('valMesuree').value) || 0;
             const unit = document.getElementById('unitMesuree').value;
-            document.getElementById('screenValue').textContent = val.toFixed(2) + unit;
+            document.getElementById('screenValue').textContent = val.toFixed(2) + ' ' + unit;
         }
 
         function validerMesure() {
             if (!chosenHypothesis || !chosenTest) {
-                alert('Choisissez d'abord une hypothèse puis un test !');
+                document.getElementById('measureFeedback').innerHTML = '<div class=\\"feedback feedback-bad\\">⚠️ Sélectionnez d\\'abord une hypothèse puis un test !</div>';
                 return;
             }
 
             const sc = scenarios[currentScenario];
             const test = sc.tests.find(t => t.id === chosenTest);
-            const valAtt = parseFloat(document.getElementById('valAttendue').value);
-            const valMes = parseFloat(document.getElementById('valMesuree').value);
-            const tol = parseFloat(document.getElementById('tolerance').value);
+            const valAtt = parseFloat(document.getElementById('valAttendue').value) || 0;
+            const valMes = parseFloat(document.getElementById('valMesuree').value) || 0;
+            const tol = parseFloat(document.getElementById('tolerance').value) || 0;
             const unitA = document.getElementById('unitAttendue').value;
             const unitM = document.getElementById('unitMesuree').value;
 
-            const conforme = Math.abs(valMes - valAtt) <= (valAtt * tol / 100);
+            const conforme = Math.abs(valMes - valAtt) <= (valAtt * tol / 100) && unitA === unitM;
 
-            // Ajout au log
+            // Feedback
+            const fb = document.getElementById('measureFeedback');
+            if (conforme) {
+                fb.innerHTML = '<div class=\\"feedback feedback-ok\\">✅ Mesure cohérente avec la valeur attendue !</div>';
+            } else {
+                fb.innerHTML = '<div class=\\"feedback feedback-bad\\">⚠️ Mesure non conforme (vérifiez unité et tolérance).</div>';
+            }
+
+            // Log
             testsHistory.push({
                 test: test.text,
-                attendu: valAtt + ' ' + unitA,
-                mesure: valMes + ' ' + unitM,
+                attendu: valAtt.toFixed(2) + ' ' + unitA,
+                mesure: valMes.toFixed(2) + ' ' + unitM,
                 conforme: conforme,
                 hypo: sc.hypotheses.find(h => h.id === chosenHypothesis).text
             });
@@ -295,41 +316,44 @@
             renderLog();
             renderConclusion();
 
-            // Reset multimètre
+            // Reset
             document.getElementById('valMesuree').value = '';
             document.getElementById('screenValue').textContent = '0.00';
         }
 
         function renderLog() {
             let html = '';
-            testsHistory.forEach((entry, i) => {
-                const status = entry.conforme ? '✅ OK' : '⚠️ KO';
+            testsHistory.forEach(entry => {
+                const status = entry.conforme ? '<span style=\\"color:#bbf7d0\\">✅ OK</span>' : '<span style=\\"color:#fecaca\\">⚠️ KO</span>';
                 html += `
-                    <div class=\"log-entry\">
+                    <div class=\\"log-entry\\">
                         <strong>${entry.test}</strong><br>
                         Attendue : ${entry.attendu} | Mesurée : ${entry.mesure}<br>
-                        <span style=\"color:${entry.conforme ? '#bbf7d0' : '#fecaca'}\">${status}</span>
+                        ${status}
                     </div>
                 `;
             });
-            document.getElementById('logTests').innerHTML = html;
+            document.getElementById('logTests').innerHTML = html || '<p style=\\"color:#9ca3af;font-style:italic\\">Aucun test effectué</p>';
         }
 
         function renderConclusion() {
             const sc = scenarios[currentScenario];
             const hypo = sc.hypotheses.find(h => h.id === chosenHypothesis);
-            let html = '<h3>🎯 Conclusion</h3>';
+            let html = '<h3 style=\\"color:#e5e7eb;margin-bottom:10px\\">🎯 Résultat diagnostic</h3>';
 
             if (hypo.correct) {
-                html += '<div style="background:rgba(22,163,74,0.2);padding:12px;border-radius:10px;border-left:4px solid #16a34a;">';
-                html += '<strong>✅ BONNE PISTE :</strong> ' + hypo.text;
+                html += '<div style=\\"background:rgba(22,163,74,0.2);padding:15px;border-radius:12px;border-left:4px solid #16a34a;\\">';
+                html += '<strong>✅ Hypothèse PERTINENTE :</strong> ' + hypo.text;
             } else {
-                html += '<div style="background:rgba(185,28,28,0.2);padding:12px;border-radius:10px;border-left:4px solid #b91c1c;">';
-                html += '<strong>⚠️ PISTE FAIBLE :</strong> ' + hypo.text;
+                html += '<div style=\\"background:rgba(185,28,28,0.2);padding:15px;border-radius:12px;border-left:4px solid #b91c1c;\\">';
+                html += '<strong>⚠️ Hypothèse MOINS PROBABLE :</strong> ' + hypo.text;
             }
 
             html += '</div>';
-            html += '<p style="margin-top:12px;"><strong>Cause réelle :</strong> ' + sc.conclusion + '</p>';
+            html += '<div style=\\"margin-top:15px;padding:12px;background:rgba(59,130,246,0.1);border-radius:10px;border-left:4px solid #2563eb;\\">';
+            html += '<strong>Cause réelle simulée :</strong><br>' + sc.conclusion;
+            html += '</div>';
+
             document.getElementById('conclusionBloc').innerHTML = html;
             document.getElementById('conclusionBloc').style.display = 'block';
         }
@@ -338,18 +362,18 @@
             chosenHypothesis = null;
             chosenTest = null;
             testsHistory = [];
-            step = 1;
             document.getElementById('logTests').innerHTML = '';
             document.getElementById('conclusionBloc').style.display = 'none';
             document.getElementById('valMesuree').value = '';
+            document.getElementById('valAttendue').value = '';
             document.getElementById('screenValue').textContent = '0.00';
+            document.getElementById('measureFeedback').innerHTML = '';
             renderSymptomes();
             renderHypotheses();
             renderTests();
         }
 
-        // Initialisation
-        window.onload = () => {
+        window.onload = function() {
             loadScenario();
         };
     </script>
