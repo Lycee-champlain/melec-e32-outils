@@ -1,276 +1,199 @@
+<script>
+    let currentStep = 0;
+    let totalTime = 0;
+    let timers = {};
+    let startTime = Date.now();
+    const stepIds = ['step0', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mode Opératoire Maintenance - E32 MELEC</title>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-        .header { text-align: center; color: white; margin-bottom: 30px; }
-        .step { background: white; margin: 20px 0; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s; }
-        .step.locked { opacity: 0.5; background: #f8f9fa; }
-        .step.completed { border-left: 8px solid #28a745; background: #f8fff9; }
-        .step-title { font-size: 22px; margin-bottom: 15px; display: flex; align-items: center; }
-        .step-number { background: #007cba; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold; }
-        .checkbox-large { transform: scale(2); margin-right: 15px; }
-        .timer { font-size: 24px; font-weight: bold; color: #dc3545; margin: 20px 0; }
-        .actions { margin-top: 20px; }
-        .btn { padding: 12px 24px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s; }
-        .btn-primary { background: #007cba; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; width: 100%; padding: 20px; font-size: 20px; margin-top: 30px; border-radius: 12px; }
-        .feedback { padding: 15px; margin: 15px 0; border-radius: 8px; font-weight: bold; }
-        .feedback.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .feedback.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .progress-bar { width: 100%; height: 10px; background: #e9ecef; border-radius: 5px; margin: 20px 0; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #28a745, #007cba); transition: width 0.5s; }
-        @media (max-width: 768px) { .step { padding: 20px; } .step-title { font-size: 18px; } }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>⚙️ MODE OPÉRATOIRE MAINTENANCE ÉLECTRIQUE</h1>
-        <p>E32 BAC PRO MELEC - Applicable à TOUS supports</p>
-        <div class="timer" id="totalTimer">Temps total : 00:00</div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-        </div>
-        <div id="progressText">Étape 0/6 - Commencer étape 1</div>
-    </div>
+    // Timer global
+    setInterval(() => {
+        totalTime = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('totalTimer').textContent = "Temps total : " + formatTime(totalTime);
+    }, 1000);
 
-    <div class="step completed" id="step0">
-        <div class="step-title">
-            <span class="step-number">0</span>
-            <h2>🚀 PRÉPARATION</h2>
-        </div>
-        <p><strong>Nom : </strong><input type="text" id="nomEtape0" style="padding: 5px; font-size: 16px;"><br>
-        <strong>Support : </strong><input type="text" id="support" style="padding: 5px; font-size: 16px;"><br>
-        <strong>Type : </strong>
-        <label><input type="radio" name="type" value="preventive"> Préventive</label>
-        <label><input type="radio" name="type" value="corrective"> Corrective</label>
-        </p>
-        <div class="actions">
-            <button class="btn btn-success" onclick="startStep1()">▶️ COMMENCER ÉTAPE 1</button>
-        </div>
-    </div>
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
 
-    <div class="step locked" id="step1">
-        <div class="step-title">
-            <span class="step-number">1</span>
-            <h2>🔐 PRISE CONNAISSANCE + SÉCURITÉ</h2>
-        </div>
-        <div class="checklist">
-            <input type="checkbox" class="checkbox-large" id="s1-1" onchange="checkSecurity1()">
-            <span>Signature fiche sécurité B1V/BR</span>
-        </div>
-        <div class="checklist">
-            <input type="checkbox" class="checkbox-large" id="s1-2" onchange="checkSecurity1()">
-            <span>VAT prévue (3 points minimum)</span>
-        </div>
-        <div class="checklist">
-            <input type="checkbox" class="checkbox-large" id="s1-3" onchange="checkSecurity1()">
-            <span>EPI vérifiés (gants classe 00)</span>
-        </div>
-        <div id="feedback1" class="feedback"></div>
-        <div class="timer" id="timer1">Étape 1 : 00:00</div>
-    </div>
+    // Gestion Étape 1 : Sécurité
+    function checkSecurity1() {
+        const checks = ['s1-1', 's1-2', 's1-3'];
+        const complete = checks.every(id => document.getElementById(id).checked);
+        const feedback = document.getElementById('feedback1');
+        
+        if (complete) {
+            feedback.innerHTML = '<div class="feedback success">Sécurité validée ! Passage à l\'étape 2...</div>';
+            setTimeout(() => unlockStep(2), 1000);
+        } else {
+            feedback.innerHTML = '';
+        }
+    }
 
-    <div class="step locked" id="step2">
-        <div class="step-title">
-            <span class="step-number">2</span>
-            <h2>🔍 ANALYSE SITUATION</h2>
-        </div>
-        <textarea id="analyse" placeholder="Décrire l'analyse de la situation (gamme ou symptômes)..." style="width:100%; height:120px; padding:15px; margin:20px 0; font-size:16px;"></textarea>
-        <div class="timer" id="timer2">Étape 2 : 00:00</div>
-    </div>
+    // Gestion Étape 3 : Hypothèses (CORRIGÉE)
+    function addHypo() {
+        const div = document.createElement('div');
+        div.className = 'hypo';
+        div.innerHTML = `
+            <input type="text" placeholder="Hypothèse..." class="hypo-input" style="width:70%; padding:8px; margin:5px 0;">
+            <button class="btn btn-danger" onclick="deleteHypo(this)" style="padding:5px 10px;">X</button>
+        `;
+        document.getElementById('hypotheses').appendChild(div);
+        checkHypoCount();
+    }
 
-    <div class="step locked" id="step3">
-        <div class="step-title">
-            <span class="step-number">3</span>
-            <h2>💡 HYPOTHÈSES + CONTRÔLES</h2>
-        </div>
-        <div id="hypotheses">
-            <div class="hypo"><input type="text" placeholder="Hypothèse 1" class="hypo-input"><button onclick="deleteHypo(this)">❌</button></div>
-        </div>
-        <button class="btn btn-primary" onclick="addHypo()">➕ Ajouter hypothèse</button>
-        <div class="timer" id="timer3">Étape 3 : 00:00</div>
-    </div>
+    function deleteHypo(btn) {
+        btn.parentElement.remove();
+        checkHypoCount();
+    }
 
-    <div class="step locked" id="step4">
-        <div class="step-title">
-            <span class="step-number">4</span>
-            <h2>🔧 RÉALISATION + MESURES</h2>
-        </div>
-        <table style="width:100%; border-collapse: collapse; margin:10px 0;">
-            <tr><th>Mesure</th><th>Valeur attendue</th><th>Mesurée</th><th>Conforme</th></tr>
-            <tr><td>Isolement</td><td>&ge;0.5 MΩ</td><td><input type="number" step="0.1" class="measure"></td><td><input type="checkbox"></td></tr>
-            <tr><td>Continuité terre</td><td>&le;2 Ω</td><td><input type="number" step="0.1" class="measure"></td><td><input type="checkbox"></td></tr>
-            <tr><td>Différentiel</td><td>15-30mA</td><td><input type="number" step="1" class="measure"></td><td><input type="checkbox"></td></tr>
-        </table>
-        <div class="timer" id="timer4">Étape 4 : 00:00</div>
-    </div>
+    function checkHypoCount() {
+        // Débloque l'étape 4 si au moins 1 hypothèse est présente
+        const count = document.querySelectorAll('.hypo').length;
+        const btnNext = document.getElementById('btnNextStep3');
+        
+        if (!btnNext && count > 0) {
+            // Créer le bouton de validation s'il n'existe pas encore
+            const btn = document.createElement('button');
+            btn.id = 'btnNextStep3';
+            btn.className = 'btn btn-success';
+            btn.textContent = 'VALIDER HYPOTHÈSES -> ÉTAPE 4';
+            btn.onclick = () => unlockStep(4);
+            document.querySelector('#step3 .actions').appendChild(btn);
+        } else if (btnNext && count === 0) {
+            btnNext.remove();
+        }
+    }
 
-    <div class="step locked" id="step5">
-        <div class="step-title">
-            <span class="step-number">5</span>
-            <h2>✅ REMISE EN SERVICE</h2>
-        </div>
-        <div class="checklist">
-            <input type="checkbox" class="checkbox-large" id="s5-1">
-            <span>Fonctionnement à vide OK</span>
-        </div>
-        <div class="checklist">
-            <input type="checkbox" class="checkbox-large" id="s5-2">
-            <span>Fonctionnement en charge OK</span>
-        </div>
-        <div class="checklist">
-            <input type="checkbox" class="checkbox-large" id="s5-3">
-            <span>Sécurité protections OK</span>
-        </div>
-        <div class="timer" id="step5-timer">Étape 5 : 00:00</div>
-    </div>
-
-    <div class="step locked" id="step6">
-        <div class="step-title">
-            <span class="step-number">6</span>
-            <h2>📄 COMPTE-RENDU</h2>
-        </div>
-        <textarea id="conclusion" placeholder="Résumé intervention, anomalies, préconisations..." style="width:100%; height:150px;"></textarea>
-        <div class="timer" id="timer6">Étape 6 : 00:00</div>
-        <div class="actions">
-            <button class="btn btn-success" onclick="completeMO()">✅ TERMINER MAINTENANCE</button>
-            <button class="btn btn-primary" onclick="exportPDF()">📄 Exporter rapport PDF</button>
-        </div>
-    </div>
-
-    <button class="btn-danger" onclick="emergencyStop()" style="margin-top: 40px;">
-        🚨 UR GENCE SÉCURITÉ - ARRÊT IMMÉDIAT
-    </button>
-
-    <script>
-        let currentStep = 0;
-        let totalTime = 0;
-        let timers = {};
-        let startTime = Date.now();
-
-        const stepTitles = ['step0', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
-
-        // Timer global
-        setInterval(() => {
-            totalTime = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById('totalTimer').textContent = `Temps total : ${formatTime(totalTime)}`;
-        }, 1000);
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    // Système de déverrouillage des étapes
+    function unlockStep(n) {
+        if (n <= currentStep) return; // Déjà débloqué
+        
+        // Marquer l'étape précédente comme terminée
+        if (n > 0) {
+            document.getElementById(stepIds[n-1]).classList.add('completed');
+            document.getElementById(stepIds[n-1]).classList.remove('locked');
+            stopStepTimer(n-1);
         }
 
-        // Sécurité étape 1
-        function checkSecurity1() {
-            const checks = ['s1-1', 's1-2', 's1-3'];
-            const complete = checks.every(id => document.getElementById(id).checked);
-            const feedback = document.getElementById('feedback1');
-
-            if(complete) {
-                feedback.innerHTML = '<div class="feedback success">✅ Sécurité validée ! Passer à l\'étape 2</div>';
-                setTimeout(() => unlockStep(2), 2000);
-            } else {
-                feedback.innerHTML = '<div class="feedback error">⚠️ Compléter sécurité avant de continuer !</div>';
-            }
-        }
-
-        // Déverrouillage étapes
-        function unlockStep(n) {
-            if(n > currentStep) currentStep = n;
-            for(let i=0; i<=currentStep; i++) {
-                document.getElementById(stepTitles[i]).classList.remove('locked');
-                if(i < currentStep) document.getElementById(stepTitles[i]).classList.add('completed');
-            }
-            updateProgress();
+        // Débloquer la nouvelle étape
+        const nextStepEl = document.getElementById(stepIds[n]);
+        if (nextStepEl) {
+            nextStepEl.classList.remove('locked');
+            // Scroll doux vers l'étape
+            nextStepEl.scrollIntoView({behavior: 'smooth'});
             startStepTimer(n);
+            currentStep = n;
+            updateProgress();
         }
+    }
 
-        function updateProgress() {
-            const progress = (currentStep / 6) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressText').textContent = `Étape ${currentStep}/6`;
+    // Démarrage initial
+    function startStep1() {
+        const nom = document.getElementById('nomEtape0').value;
+        if(nom.length < 2) {
+            alert("Merci d'indiquer votre nom avant de commencer.");
+            return;
         }
+        unlockStep(1);
+    }
 
-        function startStep1() {
-            unlockStep(1);
-        }
-
-        function startStepTimer(stepNum) {
-            if(!timers[stepNum]) {
-                timers[stepNum] = { start: Date.now() };
-                const timerEl = document.getElementById('timer' + stepNum);
-                const interval = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - timers[stepNum].start) / 1000);
-                    timerEl.textContent = `Étape ${stepNum} : ${formatTime(elapsed)}`;
-                }, 1000);
-                timers[stepNum].interval = interval;
+    // Timers par étape
+    function startStepTimer(stepNum) {
+        if (timers[stepNum]) return;
+        
+        const start = Date.now();
+        timers[stepNum] = setInterval(() => {
+            const el = document.getElementById('timer' + stepNum);
+            if (el) {
+                const elapsed = Math.floor((Date.now() - start) / 1000);
+                el.textContent = "Étape " + stepNum + " : " + formatTime(elapsed);
             }
-        }
+        }, 1000);
+    }
 
-        // Hypothèses dynamiques
-        function addHypo() {
+    function stopStepTimer(stepNum) {
+        if (timers[stepNum]) {
+            clearInterval(timers[stepNum]);
+            // On pourrait geler l'affichage ici
+        }
+    }
+
+    function updateProgress() {
+        const pct = (currentStep / 6) * 100;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = 'Étape ' + currentStep + '/6';
+    }
+
+    // Étape 4 : Déblocage auto après saisie mesures (optionnel)
+    // Ajoute un bouton manuel pour passer à l'étape 5
+    // Insère ce bouton dans le HTML de l'étape 4 si absent
+
+    // Fonction d'urgence
+    function emergencyStop() {
+        document.body.innerHTML = '<h1 style="color:red;text-align:center;margin-top:20%">⛔ ARRÊT D\'URGENCE ENCLENCHÉ ⛔<br><br>Appelez le professeur immédiatement.</h1>';
+    }
+
+    // PDF Export (simplifié)
+    async function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(22);
+        doc.text("RAPPORT D'INTERVENTION E32", 20, 20);
+        
+        doc.setFontSize(12);
+        doc.text("Élève : " + document.getElementById('nomEtape0').value, 20, 40);
+        doc.text("Temps total : " + formatTime(totalTime), 20, 50);
+        
+        const analyse = document.getElementById('analyse').value;
+        doc.text("Analyse : " + analyse, 20, 70);
+        
+        doc.save("Rapport_E32.pdf");
+    }
+
+    // Initialisation
+    // Ajout des boutons manquants dans le HTML via JS pour corriger l'existant
+    window.onload = function() {
+        // Ajouter un container d'actions à l'étape 3 si absent
+        if (!document.querySelector('#step3 .actions')) {
             const div = document.createElement('div');
-            div.className = 'hypo';
-            div.innerHTML = `<input type="text" placeholder="Hypothèse ${document.querySelectorAll('.hypo').length + 1}" class="hypo-input">
-                            <button onclick="deleteHypo(this)">❌</button>`;
-            document.getElementById('hypotheses').appendChild(div);
-            if(document.querySelectorAll('.hypo').length >= 3) unlockStep(4);
+            div.className = 'actions';
+            document.getElementById('step3').appendChild(div);
+        }
+        
+        // Ajout bouton validation étape 2 (Analyse)
+        const step2 = document.getElementById('step2');
+        if (!step2.querySelector('.btn-success')) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-success';
+            btn.textContent = 'Valider Analyse -> Étape 3';
+            btn.style.marginTop = '10px';
+            btn.onclick = () => unlockStep(3);
+            step2.appendChild(btn);
         }
 
-        function deleteHypo(btn) {
-            btn.parentElement.remove();
+        // Ajout bouton validation étape 4 (Mesures)
+        const step4 = document.getElementById('step4');
+        if (!step4.querySelector('.btn-success')) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-success';
+            btn.textContent = 'Valider Mesures -> Étape 5';
+            btn.style.marginTop = '10px';
+            btn.onclick = () => unlockStep(5);
+            step4.appendChild(btn);
         }
 
-        function completeMO() {
-            if(document.getElementById('conclusion').value) {
-                alert('🎉 Maintenance terminée avec succès ! Rapport exporté.');
-                updateProgress();
-            } else {
-                alert('⚠️ Compléter la conclusion avant de terminer.');
-            }
+        // Ajout bouton validation étape 5 (Remise en service)
+        const step5 = document.getElementById('step5');
+        if (!step5.querySelector('.btn-success')) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-success';
+            btn.textContent = 'Valider Essais -> Étape 6';
+            btn.style.marginTop = '10px';
+            btn.onclick = () => unlockStep(6);
+            step5.appendChild(btn);
         }
-
-        // Urgence
-        function emergencyStop() {
-            alert('🚨 ARRÊT IMMÉDIAT !\n\n1. Couper alimentation générale\n2. Alerter professeur\n3. Évacuer zone\n\nTemps d\'arrêt enregistré.');
-            document.body.innerHTML = '<h1 style="color:red; text-align:center; padding:50px;">🚨 INTERVENTION ARRÊTÉE - SÉCURITÉ</h1>';
-        }
-
-        // Export PDF
-        async function exportPDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-
-            pdf.setFontSize(20);
-            pdf.text('RAPPORT MAINTENANCE E32 MELEC', 20, 20);
-
-            pdf.setFontSize(14);
-            pdf.text(`Élève : ${document.getElementById('nomEtape0').value}`, 20, 40);
-            pdf.text(`Support : ${document.getElementById('support').value}`, 20, 50);
-            pdf.text(`Temps total : ${formatTime(totalTime)}`, 20, 60);
-
-            pdf.text('Mode opératoire complet', 20, 80);
-            pdf.text(document.getElementById('analyse').value.substring(0,100) + '...', 20, 90);
-
-            pdf.save('Rapport_Maintenance_E32.pdf');
-        }
-
-        // LocalStorage
-        window.onload = () => {
-            document.getElementById('nomEtape0').value = localStorage.getItem('nom') || '';
-            // Charger autres données...
-        };
-    </script>
-</body>
-</html>
+    };
+</script>
