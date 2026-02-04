@@ -9,227 +9,346 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: #2c3e50; color: white; padding: 30px; text-align: center; }
-        .controls { padding: 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
-        .level-btn { padding: 10px 20px; margin: 0 10px; border: 2px solid #007cba; background: white; border-radius: 25px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        .level-btn.active { background: #007cba; color: white; }
-        .tree-container { padding: 30px; min-height: 600px; }
-        .node { padding: 20px; margin: 20px 0; border-radius: 12px; border-left: 6px solid #007cba; background: #f8f9fa; cursor: pointer; transition: all 0.3s; }
-        .node:hover { transform: translateX(10px); box-shadow: 0 5px 15px rgba(0,124,186,0.3); }
-        .node.selected { background: #d1ecf1; border-left-color: #28a745; }
-        .node.final { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
-        .score { font-size: 24px; font-weight: bold; margin: 20px 0; padding: 15px; border-radius: 10px; text-align: center; }
-        .score.good { background: #d4edda; color: #155724; }
-        .score.bad { background: #f8d7da; color: #721c24; }
-        .measures { margin-top: 20px; }
-        .measure-input { width: 100px; margin: 5px; padding: 8px; border: 2px solid #dee2e6; border-radius: 5px; }
-        .help { background: #fff3cd; padding: 12px; border-radius: 8px; margin: 10px 0; font-style: italic; }
-        .btn { padding: 15px 30px; background: linear-gradient(45deg, #007cba, #0056b3); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; margin: 10px; transition: transform 0.2s; }
-        .btn:hover { transform: scale(1.05); }
-        .btn-success { background: linear-gradient(45deg, #28a745, #20c997); }
-        @media (max-width: 768px) { .node { margin: 10px 0; padding: 15px; } }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; padding: 20px; min-height: 100vh; }
+        .container { max-width: 1100px; margin: 0 auto; background: #0b1120; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #1e293b; }
+        .header { background: linear-gradient(135deg, #1d4ed8, #22c55e); color: white; padding: 25px 30px; display:flex; justify-content:space-between; align-items:center; }
+        .header h1 { font-size: 22px; }
+        .scenario-select { padding: 15px 20px; background: #020617; color: #e5e7eb; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1f2937; }
+        .scenario-select select { padding: 8px 12px; border-radius: 8px; border:1px solid #4b5563; background:#020617; color:#e5e7eb; }
+        .content { display:flex; flex-wrap:wrap; }
+        .left, .right { padding: 20px 25px; }
+        .left { flex: 1 1 380px; border-right:1px solid #1f2937; }
+        .right { flex: 1 1 380px; background:#020617; }
+        h2 { color:#e5e7eb; font-size:18px; margin-bottom:10px; }
+        p, li, label, span { color:#9ca3af; font-size:14px; }
+        .card { background:#020617; border-radius:12px; padding:15px 18px; margin-bottom:15px; border:1px solid #1f2937; }
+        .badge { display:inline-block; padding:3px 8px; border-radius:999px; font-size:11px; margin-right:5px; }
+        .badge-sympt { background:#1e40af; color:#e5e7eb; }
+        .badge-step { background:#059669; color:#e5e7eb; }
+        .btn { padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:600; font-size:14px; margin:5px 3px; }
+        .btn-primary { background:#2563eb; color:white; }
+        .btn-primary:hover { background:#1d4ed8; }
+        .btn-secondary { background:#111827; color:#e5e7eb; border:1px solid #374151; }
+        .btn-secondary:hover { background:#020617; }
+        .btn-success { background:#16a34a; color:white; }
+        .btn-danger { background:#b91c1c; color:white; }
+        .multimeter { background:#020617; border-radius:16px; padding:18px; border:1px solid #1f2937; display:grid; grid-template-columns:1.1fr 1.2fr; gap:15px; align-items:start; }
+
+        .multimeter-screen { background:#0f172a; border-radius:12px; padding:12px; text-align:center; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); }
+        .multimeter-screen h3 { color:#22c55e; font-family:'Consolas',monospace; font-size:26px; }
+        .multimeter-screen small { color:#9ca3af; font-size:11px; }
+        .multimeter-controls { display:flex; flex-direction:column; gap:8px; }
+        .row { display:flex; gap:8px; align-items:center; }
+        select, input[type="number"] { padding:6px 8px; border-radius:8px; border:1px solid #374151; background:#020617; color:#e5e7eb; font-size:13px; }
+        input[type="number"] { width:100px; }
+        .unit-select { width:90px; }
+        .measure-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px; }
+        .measure-row span.label { width:110px; color:#e5e7eb; }
+        .feedback { margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13px; }
+        .feedback-ok { background:#022c22; color:#bbf7d0; border:1px solid #16a34a; }
+        .feedback-bad { background:#3f1317; color:#fecaca; border:1px solid #b91c1c; }
+        .log { max-height:230px; overflow-y:auto; font-size:12px; padding-right:5px; }
+        .log-entry { border-bottom:1px dashed #1f2937; padding:6px 0; }
+        .log-entry strong { color:#e5e7eb; }
+        .conclusion { margin-top:10px; padding:10px 12px; border-radius:10px; background:#0b1120; border:1px solid #1f2937; }
+        .tag { display:inline-block; padding:2px 6px; border-radius:999px; font-size:11px; margin-right:4px; }
+        .tag-test { background:#1e3a8a; color:#e5e7eb; }
+        .tag-ok { background:#166534; color:#bbf7d0; }
+        .tag-ko { background:#7f1d1d; color:#fecaca; }
+        @media (max-width:900px){ .content{flex-direction:column;} .left{border-right:none;border-bottom:1px solid #1f2937;} }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔍 GRILLE DIAGNOSTIC INTERACTIF</h1>
-            <p>E32 BAC PRO MELEC - Arbre décisionnel maintenance corrective</p>
             <div>
-                <button class="level-btn active" onclick="setLevel('guide')">👶 Guidé</button>
-                <button class="level-btn" onclick="setLevel('semi')">😐 Semi-guidé</button>
-                <button class="level-btn" onclick="setLevel('auto')">🚀 Autonome</button>
+                <h1>🔍 Grille diagnostic + multimètre virtuel</h1>
+                <p>Simulation de pannes E32 - BAC PRO MELEC (maintenance corrective)</p>
             </div>
+            <button class="btn btn-secondary" onclick="resetScenario()">🔄 Réinitialiser</button>
         </div>
 
-        <div class="controls">
-            <div style="float: left;">
-                <strong>Support : </strong>
-                <select id="supportType">
-                    <option>Prise 16A</option>
-                    <option>Coffret éclairage</option>
-                    <option>Moteur asynchrone</option>
-                    <option>Commande va-et-vient</option>
+        <div class="scenario-select">
+            <div>
+                <span style="font-size:13px;">Scénario de panne :</span>
+                <select id="scenarioSelect" onchange="loadScenario()">
+                    <option value="prise">Prise 16A atelier ne fonctionne plus</option>
+                    <option value="moteur">Moteur VMC ne démarre plus</option>
+                    <option value="eclairage">Éclairage va-et-vient en panne</option>
                 </select>
             </div>
-            <div style="float: right;">
-                Score : <span id="currentScore">0</span>/100
-                <button class="btn" onclick="resetDiagnostic()">🔄 Nouvelle panne</button>
-                <button class="btn btn-success" onclick="exportPDF()">📄 Exporter diagnostic</button>
+            <div>
+                <span class="badge badge-step">Étape : <span id="stepLabel">1/4 - Symptômes</span></span>
             </div>
         </div>
 
-        <div class="tree-container" id="treeContainer">
-            <!-- Arbre généré dynamiquement -->
-        </div>
+        <div class="content">
+            <div class="left">
+                <h2>1. Symptômes & contexte</h2>
+                <div class="card" id="symptomesCard"></div>
 
-        <div class="score" id="finalScore"></div>
+                <h2>2. Hypothèse de panne</h2>
+                <div class="card" id="hypothesesCard"></div>
+
+                <h2>3. Tests à réaliser</h2>
+                <div class="card" id="testsCard"></div>
+            </div>
+
+            <div class="right">
+                <h2>4. Multimètre virtuel - saisie des mesures</h2>
+                <div class="multimeter">
+                    <div class="multimeter-screen">
+                        <small>Mode sélectionné</small>
+                        <h3 id="screenMode">---
+                        </h3>
+                        <small>Valeur mesurée</small>
+                        <h3 id="screenValue">0.00</h3>
+                    </div>
+                    <div class="multimeter-controls">
+                        <div class="row">
+                            <label>Type de mesure :</label>
+                            <select id="mesureType" onchange="updateMode()">
+                                <option value="tension">Tension</option>
+                                <option value="intensite">Intensité</option>
+                                <option value="isolement">Isolation</option>
+                                <option value="continuite">Continuité</option>
+                            </select>
+                        </div>
+                        <div class="measure-row">
+                            <span class="label">Valeur attendue :</span>
+                            <input type="number" id="valAttendue" step="0.01" placeholder="ex: 230">
+                            <select id="unitAttendue" class="unit-select">
+                                <option value="V">V</option>
+                                <option value="A">A</option>
+                                <option value="kOhm">kΩ</option>
+                                <option value="MOhm">MΩ</option>
+                            </select>
+                        </div>
+                        <div class="measure-row">
+                            <span class="label">Valeur mesurée :</span>
+                            <input type="number" id="valMesuree" step="0.01" placeholder="ex: 0" oninput="updateScreen()">
+                            <select id="unitMesuree" class="unit-select" onchange="updateScreen()">
+                                <option value="V">V</option>
+                                <option value="A">A</option>
+                                <option value="kOhm">kΩ</option>
+                                <option value="MOhm">MΩ</option>
+                            </select>
+                        </div>
+                        <div class="measure-row">
+                            <span class="label">Tolérance :</span>
+                            <input type="number" id="tolerance" step="0.1" value="10">
+                            <span>%</span>
+                        </div>
+                        <div class="row">
+                            <button class="btn btn-primary" onclick="validerMesure()">✅ Valider la mesure</button>
+                        </div>
+                        <div id="measureFeedback"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:18px;">
+                    <h2>Historique des tests</h2>
+                    <div class="log" id="logTests"></div>
+                    <div class="conclusion" id="conclusionBloc"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        let currentLevel = 'guide';
-        let currentPath = [];
-        let score = 0;
-        let measures = {};
-
-        const diagnosticTree = {
-            symptomes: [
-                { id: 's1', text: 'Pas de tension du tout', next: ['no_alim', 'disj'] },
-                { id: 's2', text: 'Fonctionne par intermittence', next: ['contact', 'surcharge'] },
-                { id: 's3', text: 'Fonctionne mais chauffe', next: ['surcharge', 'court'] },
-                { id: 's4', text: 'Bruit anormal', next: ['mecanique', 'electrique'] }
-            ],
-            hypotheses: {
-                no_alim: { text: 'Pas d\'alimentation', tests: ['tension_disj', 'continuite'] },
-                disj: { text: 'Protection déclenchée', tests: ['court_circuit', 'surcharge'] },
-                contact: { text: 'Mauvais contact', tests: ['serrage', 'continuite'] },
-                surcharge: { text: 'Surcharge', tests: ['intensite', 'section'] },
-                court: { text: 'Court-circuit', tests: ['isolement'] },
-                mecanique: { text: 'Défaut mécanique', tests: ['visuel'] },
-                electrique: { text: 'Défaut électrique', tests: ['isolement', 'continuite'] }
+        const scenarios = {
+            prise: {
+                symptomes: "La prise 16A de l'atelier ne fonctionne plus depuis ce matin. Les autres prises du circuit fonctionnent. Le disjoncteur divisionnaire est enclenché.",
+                hypotheses: [
+                    { id: 'h1', text: 'Borne desserrée dans la prise', correct: true },
+                    { id: 'h2', text: 'Disjoncteur général déclenché', correct: false },
+                    { id: 'h3', text: 'Lampe grillée', correct: false }
+                ],
+                tests: [
+                    { id: 't1', text: 'Mesurer la tension à la prise (V)', mesureType: 'tension', attendu: 230, unite: 'V', scenarioValeur: 0 },
+                    { id: 't2', text: 'Contrôler la continuité des conducteurs vers la prise (Ω)', mesureType: 'continuite', attendu: 0, unite: 'kOhm', scenarioValeur: 10 }
+                ],
+                conclusion: "La panne est due à une borne desserrée dans la prise, provoquant une coupure du conducteur." 
+            },
+            moteur: {
+                symptomes: "Le moteur de VMC ne démarre plus. Le disjoncteur est enclenché. Une odeur suspecte a été ressentie la veille.",
+                hypotheses: [
+                    { id: 'h1', text: 'Condensateur permanent HS', correct: true },
+                    { id: 'h2', text: 'Lampe grillée', correct: false },
+                    { id: 'h3', text: 'Prise débranchée', correct: false }
+                ],
+                tests: [
+                    { id: 't1', text: 'Mesurer la tension aux bornes moteur (V)', mesureType: 'tension', attendu: 230, unite: 'V', scenarioValeur: 230 },
+                    { id: 't2', text: 'Mesurer la capacité ou l'état du condensateur (kΩ en isolement)', mesureType: 'isolement', attendu: 0.5, unite: 'MOhm', scenarioValeur: 0 }
+                ],
+                conclusion: "La panne est due au condensateur permanent défectueux, empêchant le démarrage du moteur."
+            },
+            eclairage: {
+                symptomes: "L'éclairage d'un couloir commandé par va-et-vient ne fonctionne plus. Les lampes sont neuves.",
+                hypotheses: [
+                    { id: 'h1', text: 'Fil navette coupé ou débranché', correct: true },
+                    { id: 'h2', text: 'Disjoncteur général déclenché', correct: false },
+                    { id: 'h3', text: 'Condensateur HS', correct: false }
+                ],
+                tests: [
+                    { id: 't1', text: 'Mesurer la tension en sortie de disjoncteur (V)', mesureType: 'tension', attendu: 230, unite: 'V', scenarioValeur: 230 },
+                    { id: 't2', text: 'Contrôler la continuité du fil navette (Ω)', mesureType: 'continuite', attendu: 0, unite: 'kOhm', scenarioValeur: 9999 }
+                ],
+                conclusion: "La panne est due à une coupure du fil navette dans le circuit va-et-vient."
             }
         };
 
-        function setLevel(level) {
-            currentLevel = level;
-            document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            generateTree();
+        let currentScenario = 'prise';
+        let chosenHypothesis = null;
+        let chosenTest = null;
+        let step = 1;
+
+        function loadScenario() {
+            currentScenario = document.getElementById('scenarioSelect').value;
+            chosenHypothesis = null;
+            chosenTest = null;
+            step = 1;
+            document.getElementById('logTests').innerHTML = '';
+            document.getElementById('conclusionBloc').innerHTML = '';
+            document.getElementById('measureFeedback').innerHTML = '';
+            document.getElementById('screenMode').textContent = '---';
+            document.getElementById('screenValue').textContent = '0.00';
+            updateStepLabel();
+            renderSymptomes();
+            renderHypotheses();
+            renderTests();
         }
 
-        function generateTree() {
-            const container = document.getElementById('treeContainer');
-            container.innerHTML = '<h3>👂 Étape 1 : Identifier les symptômes</h3>';
-
-            diagnosticTree.symptomes.forEach(symp => {
-                const node = document.createElement('div');
-                node.className = 'node';
-                node.innerHTML = `<strong>${symp.text}</strong>`;
-                node.onclick = () => selectSymptom(symp.id);
-                container.appendChild(node);
-            });
+        function updateStepLabel(){
+            const labels = {
+                1:"1/4 - Symptômes",2:"2/4 - Hypothèse",3:"3/4 - Tests",4:"4/4 - Conclusion"};
+            document.getElementById('stepLabel').textContent = labels[step];
         }
 
-        function selectSymptom(symptomId) {
-            currentPath = [symptomId];
-            generateHypotheses();
-        }
-
-        function generateHypotheses() {
-            const container = document.getElementById('treeContainer');
-            container.innerHTML = '<h3>🧠 Étape 2 : Formuler les hypothèses</h3>';
-
-            diagnosticTree.symptomes.find(s => s.id === currentPath[0]).next.forEach(hypoId => {
-                const hypo = diagnosticTree.hypotheses[hypoId];
-                const node = document.createElement('div');
-                node.className = 'node';
-                node.innerHTML = `<strong>${hypo.text}</strong>`;
-                node.onclick = () => selectHypothesis(hypoId);
-                container.appendChild(node);
-            });
-        }
-
-        function selectHypothesis(hypoId) {
-            currentPath.push(hypoId);
-            generateTests();
-        }
-
-        function generateTests() {
-            const hypo = diagnosticTree.hypotheses[currentPath[1]];
-            const container = document.getElementById('treeContainer');
-
-            container.innerHTML = `
-                <h3>🧪 Étape 3 : Tests pour "${hypo.text}"</h3>
-                <div class="help">${currentLevel === 'guide' ? 'Cliquez sur le test le plus logique en 1er !' : ''}</div>
-                <div class="measures">
-                    <h4>Mesures à réaliser :</h4>
-                </div>
+        function renderSymptomes(){
+            const sc = scenarios[currentScenario];
+            document.getElementById('symptomesCard').innerHTML = `
+                <span class="badge badge-sympt">SYMPTÔMES</span>
+                <p style="margin-top:8px;">${sc.symptomes}</p>
             `;
+        }
 
-            hypo.tests.forEach(testId => {
-                const testNode = document.createElement('div');
-                testNode.className = 'node';
-                testNode.innerHTML = getTestHTML(testId);
-                testNode.onclick = () => performTest(testId);
-                container.querySelector('.measures').appendChild(testNode);
+        function renderHypotheses(){
+            const sc = scenarios[currentScenario];
+            let html = '<p>Choisir l'hypothèse la plus probable :</p><div style="margin-top:8px;">';
+            sc.hypotheses.forEach(h => {
+                html += `<button class="btn btn-secondary" onclick="selectHypothesis('${h.id}')">${h.text}</button><br>`;
             });
+            html += '</div>';
+            document.getElementById('hypothesesCard').innerHTML = html;
         }
 
-        function getTestHTML(testId) {
-            const tests = {
-                tension_disj: 'Tension disjoncteur (multimètre)',
-                continuite: 'Continuité câblage (multimètre)',
-                court_circuit: 'Isolement (contrôleur)',
-                serrage: 'Contrôle serrage bornes (visuel + couple)',
-                intensite: 'Intensité (pince ampèremétrique)',
-                section: 'Section câbles (visuel)',
-                isolement: 'Résistance isolement (≥0.5 MΩ)',
-                visuel: 'Contrôle visuel complet'
-            };
-            return `<strong>${tests[testId]}</strong>`;
+        function renderTests(){
+            const sc = scenarios[currentScenario];
+            let html = '<p>Choisir le test à effectuer avec le multimètre :</p><div style="margin-top:8px;">';
+            sc.tests.forEach(t => {
+                html += `<button class="btn btn-secondary" onclick="selectTest('${t.id}')">${t.text}</button><br>`;
+            });
+            html += '</div>';
+            document.getElementById('testsCard').innerHTML = html;
         }
 
-        function performTest(testId) {
-            const container = document.getElementById('treeContainer');
-            const measureDiv = document.createElement('div');
-            measureDiv.innerHTML = `
-                <h4>${getTestHTML(testId)}</h4>
-                <label>Valeur mesurée : <input type="number" step="0.1" class="measure-input" id="m${testId}"></label>
-                <label><input type="checkbox" id="c${testId}"> Conforme</label>
-                <button class="btn" onclick="validateTest('${testId}')">✅ Valider test</button>
+        function selectHypothesis(id){
+            chosenHypothesis = id;
+            step = 3; // on autorise tests après choix d'hypothèse
+            updateStepLabel();
+        }
+
+        function selectTest(id){
+            chosenTest = id;
+            step = 3;
+            updateStepLabel();
+            const sc = scenarios[currentScenario];
+            const test = sc.tests.find(t=>t.id===id);
+            document.getElementById('mesureType').value = test.mesureType;
+            updateMode();
+            document.getElementById('valAttendue').value = test.attendu;
+            document.getElementById('unitAttendue').value = test.unite;
+        }
+
+        function updateMode(){
+            const type = document.getElementById('mesureType').value;
+            const labels = {tension:'Tension',intensite:'Intensité',isolement:'Isolation',continuite:'Continuité'};
+            document.getElementById('screenMode').textContent = labels[type] || '---';
+        }
+
+        function updateScreen(){
+            const val = document.getElementById('valMesuree').value || 0;
+            const unit = document.getElementById('unitMesuree').value;
+            document.getElementById('screenValue').textContent = parseFloat(val).toFixed(2) + ' ' + unit;
+        }
+
+        function validerMesure(){
+            if(!chosenHypothesis || !chosenTest){
+                document.getElementById('measureFeedback').innerHTML = '<div class="feedback feedback-bad">⚠️ Choisir d'abord une hypothèse et un test.</div>';
+                return;
+            }
+            const sc = scenarios[currentScenario];
+            const test = sc.tests.find(t=>t.id===chosenTest);
+            const valAtt = parseFloat(document.getElementById('valAttendue').value || 0);
+            const valMes = parseFloat(document.getElementById('valMesuree').value || 0);
+            const tol = parseFloat(document.getElementById('tolerance').value || 0);
+            const unitA = document.getElementById('unitAttendue').value;
+            const unitM = document.getElementById('unitMesuree').value;
+
+            let conforme = false;
+            if(unitA === unitM){
+                const min = valAtt*(1 - tol/100);
+                const max = valAtt*(1 + tol/100);
+                conforme = (valMes >= min && valMes <= max);
+            }
+
+            const fb = document.getElementById('measureFeedback');
+            if(conforme){
+                fb.innerHTML = '<div class="feedback feedback-ok">✅ Mesure cohérente avec la valeur attendue.</div>';
+            } else {
+                fb.innerHTML = '<div class="feedback feedback-bad">⚠️ Mesure non conforme ou unité différente. À analyser.</div>';
+            }
+
+            // Ajout au log
+            const log = document.getElementById('logTests');
+            const hyp = sc.hypotheses.find(h=>h.id===chosenHypothesis);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <div><span class="tag tag-test">TEST</span> <strong>${test.text}</strong></div>
+                <div>Valeur attendue : ${valAtt} ${unitA} | Mesurée : ${valMes} ${unitM}</div>
+                <div>Hypothèse : ${hyp.text}</div>
             `;
-            container.appendChild(measureDiv);
+            log.appendChild(entry);
+
+            step = 4;
+            updateStepLabel();
+            renderConclusion(conforme);
         }
 
-        function validateTest(testId) {
-            const value = document.getElementById(`m${testId}`).value;
-            const conforme = document.getElementById(`c${testId}`).checked;
-
-            if(conforme) score += 20;
-            else score += 5;
-
-            document.getElementById('currentScore').textContent = score;
-            generateConclusion();
+        function renderConclusion(conforme){
+            const sc = scenarios[currentScenario];
+            const hyp = sc.hypotheses.find(h=>h.id===chosenHypothesis);
+            const bloc = document.getElementById('conclusionBloc');
+            let html = '<h3 style="color:#e5e7eb;font-size:15px;margin-bottom:8px;">🎯 Conclusion simulée</h3>';
+            html += `<p>Hypothèse choisie : <strong>${hyp.text}</strong></p>`;
+            if(hyp.correct){
+                html += `<p><span class="tag tag-ok">BONNE PISTE</span> Cette hypothèse est cohérente avec les symptômes.</p>`;
+            } else {
+                html += `<p><span class="tag tag-ko">PISTE FAIBLE</span> Cette hypothèse est peu probable selon les symptômes.</p>`;
+            }
+            html += `<p style="margin-top:8px;">${sc.conclusion}</p>`;
+            bloc.innerHTML = html;
         }
 
-        function generateConclusion() {
-            const container = document.getElementById('treeContainer');
-            container.innerHTML += `
-                <div class="node final">
-                    <h3>🎯 CONCLUSION DIAGNOSTIC</h3>
-                    <p>Cause probable : ${diagnosticTree.hypotheses[currentPath[1]].text}</p>
-                    <p>Score obtenu : <span id="finalScore">${score}</span>/100</p>
-                    <div class="score ${score >= 80 ? 'good' : 'bad'}">${score >= 80 ? '✅ Diagnostic parfait !' : '⚠️ Revoir la méthode'}</div>
-                </div>
-            `;
-
-            document.getElementById('finalScore').textContent = score;
+        function resetScenario(){
+            document.getElementById('scenarioSelect').value = currentScenario;
+            loadScenario();
         }
 
-        function resetDiagnostic() {
-            currentPath = [];
-            score = 0;
-            document.getElementById('currentScore').textContent = '0';
-            generateTree();
-        }
-
-        async function exportPDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-
-            pdf.setFontSize(20);
-            pdf.text('GRILLE DIAGNOSTIC E32 MELEC', 20, 20);
-            pdf.text(`Support : ${document.getElementById('supportType').value}`, 20, 35);
-            pdf.text(`Score : ${score}/100`, 20, 50);
-            pdf.text(`Niveau : ${currentLevel}`, 20, 65);
-
-            pdf.save('Diagnostic_E32.pdf');
-        }
-
-        // Init
-        generateTree();
+        // Initialisation
+        loadScenario();
     </script>
 </body>
 </html>
