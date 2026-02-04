@@ -1,311 +1,432 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mode Opératoire Maintenance - E32 MELEC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E32 Maintenance | Application Pro</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #2563eb; /* Bleu intense */
+            --primary-dark: #1e40af;
+            --success: #10b981; /* Vert moderne */
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a; /* Bleu nuit très sombre */
+            --gray: #64748b;
+            --light: #f1f5f9;
+            --white: #ffffff;
+            --sidebar-width: 280px;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; color: #333; }
-        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .header h1 { color: #2c3e50; font-size: 24px; margin-bottom: 10px; }
-        .progress-container { position: sticky; top: 0; background: white; z-index: 100; padding: 15px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .progress-bar { height: 10px; background: #e9ecef; border-radius: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #22c55e; width: 0%; transition: width 0.5s ease; }
-        .step { background: white; margin-bottom: 25px; padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s ease; opacity: 0.6; pointer-events: none; border-left: 5px solid #bdc3c7; }
-        .step.active { opacity: 1; pointer-events: all; border-left-color: #3498db; transform: scale(1.02); }
-        .step.completed { opacity: 0.8; border-left-color: #2ecc71; background: #f0fff4; }
-        .step-header { display: flex; align-items: center; margin-bottom: 20px; }
-        .step-number { background: #3498db; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; }
-        .step.completed .step-number { background: #2ecc71; }
-        h2 { font-size: 20px; color: #2c3e50; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; margin-top: 10px; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-success { background: #2ecc71; color: white; width: 100%; margin-top: 20px; padding: 15px; font-size: 16px; }
-        .btn-success:hover { background: #27ae60; }
-        .btn-danger { background: #e74c3c; color: white; }
-        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; font-family: inherit; }
-        .checklist-item { display: flex; align-items: center; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
-        .checklist-item input { transform: scale(1.5); margin-right: 15px; }
-        .timer { font-family: 'Consolas', monospace; font-size: 18px; color: #e67e22; margin-left: auto; background: #fff3e0; padding: 5px 10px; border-radius: 5px; }
-        .hypo-list { margin: 15px 0; }
-        .hypo-item { display: flex; gap: 10px; margin-bottom: 10px; }
+        body { font-family: 'Inter', sans-serif; background: #e2e8f0; color: #334155; height: 100vh; overflow: hidden; display: flex; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--dark);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        .brand { font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        .brand span { color: var(--primary); }
+
+        .nav-steps { flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .nav-item {
+            display: flex; align-items: center; padding: 12px 15px; border-radius: 10px;
+            color: #94a3b8; cursor: not-allowed; transition: all 0.3s; font-size: 14px; font-weight: 500;
+        }
+        .nav-item.active { background: var(--primary); color: var(--white); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+        .nav-item.completed { color: var(--success); }
+        .nav-item.completed::before { content: '✓'; margin-right: 8px; font-weight: bold; }
+        .nav-number { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 12px; }
+        .nav-item.active .nav-number { background: var(--white); color: var(--primary); font-weight: bold; }
+
+        .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid #334155; }
+        .total-timer { font-family: 'Monaco', monospace; font-size: 24px; font-weight: 700; color: var(--warning); text-align: center; margin-bottom: 5px; }
+        .total-label { text-align: center; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* MAIN CONTENT */
+        .main { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .page-title { font-size: 24px; font-weight: 700; color: var(--dark); }
+        .user-info { display: flex; align-items: center; gap: 10px; background: var(--white); padding: 8px 16px; border-radius: 999px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .status-dot { width: 10px; height: 10px; background: var(--success); border-radius: 50%; animation: pulse 2s infinite; }
+
+        /* STEPS CARDS */
+        .step-card {
+            background: var(--white); border-radius: 20px; padding: 40px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            max-width: 900px; margin: 0 auto;
+            display: none; /* Masqué par défaut */
+            animation: slideIn 0.4s ease-out;
+        }
+        .step-card.active { display: block; }
+
+        .card-header { margin-bottom: 30px; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-size: 22px; font-weight: 600; color: var(--dark); display: flex; align-items: center; gap: 12px; }
+        .card-icon { font-size: 24px; }
+        .step-timer { font-family: 'Monaco', monospace; font-size: 16px; color: var(--primary); background: #eff6ff; padding: 6px 12px; border-radius: 8px; }
+
+        /* FORM ELEMENTS */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--gray); }
+        input[type="text"], textarea {
+            width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px;
+            font-size: 16px; transition: all 0.3s; font-family: 'Inter', sans-serif;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+        .checklist-item {
+            background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px;
+            margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s;
+        }
+        .checklist-item:hover { border-color: var(--primary); background: #eff6ff; }
+        .checklist-item input { width: 20px; height: 20px; margin-right: 15px; accent-color: var(--primary); }
+        .checklist-item span { font-size: 15px; font-weight: 500; }
+
+        /* BUTTONS */
+        .btn-action {
+            width: 100%; padding: 16px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .btn-primary { background: var(--primary); color: var(--white); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn-success { background: var(--success); color: var(--white); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-success:hover { background: #059669; transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 2px solid #e2e8f0; color: var(--gray); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        .dynamic-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .dynamic-item { display: flex; gap: 10px; animation: fadeIn 0.3s; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            body { flex-direction: column; height: auto; overflow: auto; }
+            .sidebar { width: 100%; flex-direction: row; align-items: center; padding: 10px 20px; position: sticky; top: 0; }
+            .nav-steps { display: none; } /* Masquer étapes sur mobile pour gagner place */
+            .sidebar-footer { display: none; }
+            .main { padding: 20px; }
+            .step-card { padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="progress-container">
-    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-        <span id="progressText">Préparation</span>
-        <span id="totalTimer" style="font-weight:bold; color:#2c3e50;">00:00</span>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-</div>
-
-<div class="header">
-    <h1>📝 Mode Opératoire E32</h1>
-    <p>Maintenance Corrective - Suivi d'intervention</p>
-</div>
-
-<!-- ÉTAPE 0 : PRÉPARATION -->
-<div class="step active" id="step0">
-    <div class="step-header">
-        <span class="step-number">0</span>
-        <h2>Préparation de l'intervention</h2>
-    </div>
-    <div>
-        <label>Nom de l'élève :</label>
-        <input type="text" id="eleveNom" placeholder="Votre nom...">
-        <label style="margin-top:10px; display:block;">Système / Support :</label>
-        <input type="text" id="systemeNom" placeholder="Ex: Malaxeur, TGBT...">
-    </div>
-    <button class="btn btn-success" onclick="validateStep0()">Démarrer l'intervention ▶</button>
-</div>
-
-<!-- ÉTAPE 1 : SÉCURITÉ -->
-<div class="step" id="step1">
-    <div class="step-header">
-        <span class="step-number">1</span>
-        <h2>Mise en sécurité (Consignation)</h2>
-        <div class="timer" id="timer1">00:00</div>
-    </div>
-    <div class="checklist-item">
-        <input type="checkbox" id="secu1" onchange="checkSecu()">
-        <label>Autorisation d'accès / Bon de travail signé</label>
-    </div>
-    <div class="checklist-item">
-        <input type="checkbox" id="secu2" onchange="checkSecu()">
-        <label>EPI portés (Gants, Écran facial, Tapis)</label>
-    </div>
-    <div class="checklist-item">
-        <input type="checkbox" id="secu3" onchange="checkSecu()">
-        <label>VAT effectuée (Vérification Absence Tension)</label>
-    </div>
-    <div id="btnSecuContainer"></div>
-</div>
-
-<!-- ÉTAPE 2 : ANALYSE -->
-<div class="step" id="step2">
-    <div class="step-header">
-        <span class="step-number">2</span>
-        <h2>Analyse du dysfonctionnement</h2>
-        <div class="timer" id="timer2">00:00</div>
-    </div>
-    <p>Décrivez les symptômes observés et votre analyse :</p>
-    <textarea id="analyseText" rows="4" placeholder="Le moteur grogne mais ne tourne pas..."></textarea>
-    <button class="btn btn-success" onclick="validateStep2()">✅ Valider l'analyse et continuer</button>
-</div>
-
-<!-- ÉTAPE 3 : HYPOTHÈSES -->
-<div class="step" id="step3">
-    <div class="step-header">
-        <span class="step-number">3</span>
-        <h2>Hypothèses de pannes</h2>
-        <div class="timer" id="timer3">00:00</div>
-    </div>
-    <div class="hypo-list" id="hypoContainer">
-        <div class="hypo-item">
-            <input type="text" placeholder="Hypothèse 1 (ex: Fusible HS)">
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar">
+        <div class="brand">
+            ⚡ <span>MELEC APP</span>
         </div>
-    </div>
-    <button class="btn btn-primary" onclick="addHypo()">+ Ajouter une hypothèse</button>
-    <button class="btn btn-success" onclick="validateStep3()">✅ Valider les hypothèses</button>
-</div>
-
-<!-- ÉTAPE 4 : MESURES -->
-<div class="step" id="step4">
-    <div class="step-header">
-        <span class="step-number">4</span>
-        <h2>Mesures et Tests</h2>
-        <div class="timer" id="timer4">00:00</div>
-    </div>
-    <p>Notez vos mesures significatives :</p>
-    <div class="hypo-list" id="mesuresContainer">
-        <div class="hypo-item">
-            <input type="text" placeholder="Test effectué (ex: Tension U1-U2)">
-            <input type="text" placeholder="Valeur (ex: 230V)" style="width:100px;">
+        <div class="nav-steps">
+            <div class="nav-item active" id="nav0"><span class="nav-number">0</span> Préparation</div>
+            <div class="nav-item" id="nav1"><span class="nav-number">1</span> Consignation</div>
+            <div class="nav-item" id="nav2"><span class="nav-number">2</span> Analyse</div>
+            <div class="nav-item" id="nav3"><span class="nav-number">3</span> Hypothèses</div>
+            <div class="nav-item" id="nav4"><span class="nav-number">4</span> Mesures</div>
+            <div class="nav-item" id="nav5"><span class="nav-number">5</span> Remise en service</div>
+            <div class="nav-item" id="nav6"><span class="nav-number">6</span> Rapport</div>
         </div>
-    </div>
-    <button class="btn btn-primary" onclick="addMesure()">+ Ajouter une mesure</button>
-    <button class="btn btn-success" onclick="validateStep4()">✅ Valider les mesures</button>
-</div>
+        <div class="sidebar-footer">
+            <div class="total-timer" id="globalTimer">00:00</div>
+            <div class="total-label">Temps total</div>
+        </div>
+    </nav>
 
-<!-- ÉTAPE 5 : REMISE EN SERVICE -->
-<div class="step" id="step5">
-    <div class="step-header">
-        <span class="step-number">5</span>
-        <h2>Remise en service</h2>
-        <div class="timer" id="timer5">00:00</div>
-    </div>
-    <div class="checklist-item">
-        <input type="checkbox" id="remise1">
-        <label>Outils retirés de la zone</label>
-    </div>
-    <div class="checklist-item">
-        <input type="checkbox" id="remise2">
-        <label>Protections remises en place</label>
-    </div>
-    <div class="checklist-item">
-        <input type="checkbox" id="remise3">
-        <label>Essai de fonctionnement OK</label>
-    </div>
-    <button class="btn btn-success" onclick="validateStep5()">🏁 Terminer l'intervention</button>
-</div>
+    <!-- MAIN CONTENT -->
+    <main class="main">
+        <div class="top-bar">
+            <div class="page-title">Maintenance Corrective E32</div>
+            <div class="user-info">
+                <div class="status-dot"></div>
+                <span id="headerEleve">Non identifié</span>
+            </div>
+        </div>
 
-<!-- ÉTAPE 6 : RAPPORT -->
-<div class="step" id="step6">
-    <div class="step-header">
-        <span class="step-number">6</span>
-        <h2>Rapport d'intervention</h2>
-    </div>
-    <div style="background:#d4edda; color:#155724; padding:20px; border-radius:10px; text-align:center;">
-        <h3>🎉 Intervention terminée !</h3>
-        <p>Temps total : <span id="finalTime"></span></p>
-    </div>
-    <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="generatePDF()">📄 Télécharger le rapport PDF</button>
-</div>
+        <!-- STEP 0 -->
+        <div class="step-card active" id="step0">
+            <div class="card-header">
+                <div class="card-title"><span class="card-icon">📋</span> Préparation de l'intervention</div>
+            </div>
+            <div class="form-group">
+                <label>Nom du technicien (Élève)</label>
+                <input type="text" id="inputNom" placeholder="Entrez votre nom..." autofocus>
+            </div>
+            <div class="form-group">
+                <label>Système / Support technique</label>
+                <input type="text" id="inputSysteme" placeholder="Ex: TGBT Atelier, Malaxeur...">
+            </div>
+            <button class="btn-action btn-primary" onclick="validateStep0()">Commencer l'intervention 🚀</button>
+        </div>
 
-<script>
-    let currentStep = 0;
-    let startTime = Date.now();
-    let stepTimers = {};
+        <!-- STEP 1 -->
+        <div class="step-card" id="step1">
+            <div class="card-header">
+                <div class="card-title"><span class="card-icon">🔒</span> Mise en sécurité</div>
+                <div class="step-timer" id="timer1">00:00</div>
+            </div>
+            <div class="checklist-item" onclick="toggleCheck('secu1')">
+                <input type="checkbox" id="secu1" onchange="checkSecu()">
+                <span>J'ai reçu l'autorisation d'accès (Bon de travail signé)</span>
+            </div>
+            <div class="checklist-item" onclick="toggleCheck('secu2')">
+                <input type="checkbox" id="secu2" onchange="checkSecu()">
+                <span>Je porte mes EPI (Gants isolants, Écran facial, Tapis)</span>
+            </div>
+            <div class="checklist-item" onclick="toggleCheck('secu3')">
+                <input type="checkbox" id="secu3" onchange="checkSecu()">
+                <span>J'ai effectué la VAT (Vérification d'Absence de Tension)</span>
+            </div>
+            <div id="btnSecuContainer" style="margin-top:20px;"></div>
+        </div>
 
-    // Timer global
-    setInterval(() => {
-        const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
-        document.getElementById('totalTimer').textContent = formatTime(totalSeconds);
-        
-        // Timer de l'étape active
-        if(currentStep > 0 && currentStep < 6) {
-            const el = document.getElementById('timer' + currentStep);
-            if(el) {
-                if(!stepTimers[currentStep]) stepTimers[currentStep] = Date.now();
-                const stepSeconds = Math.floor((Date.now() - stepTimers[currentStep]) / 1000);
-                el.textContent = formatTime(stepSeconds);
+        <!-- STEP 2 -->
+        <div class="step-card" id="step2">
+            <div class="card-header">
+                <div class="card-title"><span class="card-icon">🔍</span> Analyse du problème</div>
+                <div class="step-timer" id="timer2">00:00</div>
+            </div>
+            <div class="form-group">
+                <label>Observation des symptômes et analyse fonctionnelle :</label>
+                <textarea id="analyseText" rows="6" placeholder="Décrivez ce que vous observez (le moteur ne tourne pas, disjoncteur déclenché...)"></textarea>
+            </div>
+            <button class="btn-action btn-success" onclick="validateStep2()">Valider l'analyse</button>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-card" id="step3">
+            <div class="card-header">
+                <div class="card-title"><span class="card-icon">💡</span> Hypothèses de panne</div>
+                <div class="step-timer" id="timer3">00:00</div>
+            </div>
+            <div class="dynamic-list" id="hypoContainer">
+                <div class="dynamic-item">
+                    <input type="text" placeholder="Hypothèse 1 (ex: Fusible F1 HS)">
+                </div>
+            </div>
+            <button class="btn-action btn-outline" onclick="addHypo()" style="margin-bottom:15px;">+ Ajouter une hypothèse</button>
+            <button class="btn-action btn-success" onclick="goToStep(4)">Valider les hypothèses</button>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step-card" id="step4">
+            <div class="card-header">
+                <div class="card-title"><span class="card-icon">⚡</span> Mesures et Tests</div>
+                <div class="step-timer" id="timer4">00:00</div>
+            </div>
+            <div class="dynamic-list" id="mesuresContainer">
+                <div class="dynamic-item">
+                    <input type="text" placeholder="Test (ex: Tension U1-U2)" style="flex:2;">
+                    <input type="text" placeholder="Valeur" style="flex:1;">
+                </div>
+            </div>
+            <button class="btn-action btn-outline" onclick="addMesure()" style="margin-bottom:15px;">+ Ajouter une mesure</button>
+            <button class="btn-action btn-success" onclick="goToStep(5)">Valider les mesures</button>
+        </div>
+
+        <!-- STEP 5 -->
+        <div class="step-card" id="step5">
+            <div class="card-header">
+                <div class="card-title"><span class="card-icon">✅</span> Remise en service</div>
+                <div class="step-timer" id="timer5">00:00</div>
+            </div>
+            <div class="checklist-item" onclick="toggleCheck('remise1')">
+                <input type="checkbox" id="remise1">
+                <span>Zone nettoyée et outils rangés</span>
+            </div>
+            <div class="checklist-item" onclick="toggleCheck('remise2')">
+                <input type="checkbox" id="remise2">
+                <span>Protections remises en place (plastrons, portes)</span>
+            </div>
+            <div class="checklist-item" onclick="toggleCheck('remise3')">
+                <input type="checkbox" id="remise3">
+                <span>Essai de fonctionnement concluant</span>
+            </div>
+            <button class="btn-action btn-success" onclick="validateStep5()" style="margin-top:20px;">Terminer l'intervention 🏁</button>
+        </div>
+
+        <!-- STEP 6 -->
+        <div class="step-card" id="step6">
+            <div class="card-header">
+                <div class="card-title"><span class="card-icon">📄</span> Rapport d'intervention</div>
+            </div>
+            <div style="background: #ecfdf5; border: 1px solid #10b981; padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 30px;">
+                <h3 style="color: #064e3b; margin-bottom: 10px; font-size: 24px;">Félicitations !</h3>
+                <p style="color: #065f46; font-size: 18px;">Intervention terminée en <span id="finalTime" style="font-weight:bold;">00:00</span></p>
+            </div>
+            <button class="btn-action btn-primary" onclick="generatePDF()">Télécharger le rapport PDF 📥</button>
+        </div>
+
+    </main>
+
+    <script>
+        // LOGIQUE JS ROBUSTE
+        let currentStep = 0;
+        let startTime = null;
+        let stepTimers = {};
+        let intervalGlobal = null;
+
+        // Fonction Utilitaires
+        function toggleCheck(id) {
+            const el = document.getElementById(id);
+            // el.checked = !el.checked; // Conflit avec le click natif checkbox, on laisse gérer par le label/input
+            if(id.startsWith('secu')) checkSecu();
+        }
+
+        function formatTime(s) {
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        function startGlobalTimer() {
+            startTime = Date.now();
+            intervalGlobal = setInterval(() => {
+                const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('globalTimer').textContent = formatTime(totalSeconds);
+
+                // Timer étape
+                if(currentStep > 0 && currentStep < 6) {
+                    const el = document.getElementById('timer' + currentStep);
+                    if(el) {
+                        if(!stepTimers[currentStep]) stepTimers[currentStep] = Date.now();
+                        const stepSeconds = Math.floor((Date.now() - stepTimers[currentStep]) / 1000);
+                        el.textContent = formatTime(stepSeconds);
+                    }
+                }
+            }, 1000);
+        }
+
+        function goToStep(n) {
+            // Masquer étape actuelle
+            document.getElementById('step' + currentStep).classList.remove('active');
+
+            // Sidebar update
+            const navOld = document.getElementById('nav' + currentStep);
+            if(navOld) {
+                navOld.classList.remove('active');
+                navOld.classList.add('completed');
+            }
+
+            // Afficher nouvelle étape
+            currentStep = n;
+            const nextCard = document.getElementById('step' + n);
+            nextCard.classList.add('active');
+
+            // Sidebar active
+            const navNew = document.getElementById('nav' + n);
+            if(navNew) {
+                navNew.classList.add('active');
+                navNew.scrollIntoView({behavior: 'smooth', block: 'center'});
+            }
+
+            // Init timer étape si pas déjà fait
+            if(!stepTimers[n]) stepTimers[n] = Date.now();
+        }
+
+        // VALIDATIONS
+        function validateStep0() {
+            const nom = document.getElementById('inputNom').value;
+            if(nom.length < 2) { alert("Nom requis !"); return; }
+            document.getElementById('headerEleve').textContent = nom;
+            startGlobalTimer();
+            goToStep(1);
+        }
+
+        function checkSecu() {
+            const s1 = document.getElementById('secu1').checked;
+            const s2 = document.getElementById('secu2').checked;
+            const s3 = document.getElementById('secu3').checked;
+            const btnContainer = document.getElementById('btnSecuContainer');
+
+            if(s1 && s2 && s3) {
+                btnContainer.innerHTML = `<button class="btn-action btn-success" onclick="goToStep(2)">Sécurité OK - Continuer</button>`;
+            } else {
+                btnContainer.innerHTML = '';
             }
         }
-    }, 1000);
 
-    function formatTime(s) {
-        const m = Math.floor(s / 60);
-        const sec = s % 60;
-        return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-    }
-
-    function goToStep(n) {
-        // Marquer l'étape actuelle comme terminée
-        const currentEl = document.getElementById('step' + currentStep);
-        if(currentEl) {
-            currentEl.classList.remove('active');
-            currentEl.classList.add('completed');
+        function validateStep2() {
+            if(document.getElementById('analyseText').value.length < 5) {
+                alert("Analyse requise !"); return;
+            }
+            goToStep(3);
         }
 
-        // Activer la nouvelle étape
-        currentStep = n;
-        const nextEl = document.getElementById('step' + n);
-        if(nextEl) {
-            nextEl.classList.add('active');
-            nextEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Init timer étape
-            stepTimers[n] = Date.now();
+        function addHypo() {
+            const div = document.createElement('div');
+            div.className = 'dynamic-item';
+            div.innerHTML = `<input type="text" placeholder="Nouvelle hypothèse...">`;
+            document.getElementById('hypoContainer').appendChild(div);
         }
 
-        // Barre de progression
-        const pct = (n / 6) * 100;
-        document.getElementById('progressFill').style.width = pct + '%';
-        document.getElementById('progressText').textContent = `Étape ${n} / 6`;
-    }
-
-    // --- VALIDATIONS ---
-
-    function validateStep0() {
-        if(document.getElementById('eleveNom').value.length < 2) {
-            alert("Merci d'indiquer votre nom.");
-            return;
+        function addMesure() {
+            const div = document.createElement('div');
+            div.className = 'dynamic-item';
+            div.innerHTML = `<input type="text" placeholder="Test" style="flex:2;"> <input type="text" placeholder="Valeur" style="flex:1;">`;
+            document.getElementById('mesuresContainer').appendChild(div);
         }
-        startTime = Date.now(); // Reset timer
-        goToStep(1);
-    }
 
-    function checkSecu() {
-        const s1 = document.getElementById('secu1').checked;
-        const s2 = document.getElementById('secu2').checked;
-        const s3 = document.getElementById('secu3').checked;
-        
-        const container = document.getElementById('btnSecuContainer');
-        if(s1 && s2 && s3) {
-            container.innerHTML = '<button class="btn btn-success" onclick="goToStep(2)">✅ Sécurité OK - Continuer</button>';
-        } else {
-            container.innerHTML = '';
+        function validateStep5() {
+            if(!document.getElementById('remise1').checked || !document.getElementById('remise2').checked) {
+                if(!confirm("Attention, remise en service incomplète. Continuer ?")) return;
+            }
+            clearInterval(intervalGlobal); // Arrêt timer
+            document.getElementById('finalTime').textContent = document.getElementById('globalTimer').textContent;
+            goToStep(6);
         }
-    }
 
-    function validateStep2() {
-        const txt = document.getElementById('analyseText').value;
-        if(txt.length < 5) {
-            alert("Décrivez votre analyse (min 5 caractères).");
-            return;
+        // PDF GENERATION PRO
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header Pro
+            doc.setFillColor(37, 99, 235); // Bleu primaire
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text("RAPPORT D'INTERVENTION E32", 20, 25);
+            doc.setFontSize(10);
+            doc.text("BAC PRO MELEC - Maintenance Corrective", 20, 35);
+
+            // Info
+            doc.setTextColor(50, 50, 50);
+            doc.setFontSize(12);
+            doc.text(`Technicien : ${document.getElementById('inputNom').value}`, 20, 60);
+            doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 60);
+            doc.text(`Support : ${document.getElementById('inputSysteme').value}`, 20, 70);
+            doc.text(`Durée : ${document.getElementById('finalTime').textContent}`, 150, 70);
+
+            // Contenu
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 80, 190, 80);
+
+            doc.setFontSize(14);
+            doc.setTextColor(37, 99, 235);
+            doc.text("1. Analyse du dysfonctionnement", 20, 95);
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            const splitAnalyse = doc.splitTextToSize(document.getElementById('analyseText').value, 170);
+            doc.text(splitAnalyse, 20, 105);
+
+            doc.save("Rapport_Intervention_E32.pdf");
         }
-        goToStep(3);
-    }
-
-    function addHypo() {
-        const div = document.createElement('div');
-        div.className = 'hypo-item';
-        div.innerHTML = '<input type="text" placeholder="Nouvelle hypothèse...">';
-        document.getElementById('hypoContainer').appendChild(div);
-    }
-
-    function validateStep3() {
-        goToStep(4); // Pas de blocage strict, on fait confiance
-    }
-
-    function addMesure() {
-        const div = document.createElement('div');
-        div.className = 'hypo-item';
-        div.innerHTML = '<input type="text" placeholder="Test..."><input type="text" placeholder="Valeur" style="width:100px;">';
-        document.getElementById('mesuresContainer').appendChild(div);
-    }
-
-    function validateStep4() {
-        goToStep(5);
-    }
-
-    function validateStep5() {
-        const r1 = document.getElementById('remise1').checked;
-        const r2 = document.getElementById('remise2').checked;
-        const r3 = document.getElementById('remise3').checked;
-        
-        if(!r1 || !r2 || !r3) {
-            if(!confirm("Certains points de remise en service ne sont pas cochés. Terminer quand même ?")) return;
-        }
-        
-        document.getElementById('finalTime').textContent = document.getElementById('totalTimer').textContent;
-        goToStep(6);
-    }
-
-    // PDF EXPORT
-    async function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        doc.setFontSize(20);
-        doc.text("RAPPORT D'INTERVENTION E32", 20, 20);
-        
-        doc.setFontSize(12);
-        doc.text(`Technicien : ${document.getElementById('eleveNom').value}`, 20, 40);
-        doc.text(`Support : ${document.getElementById('systemeNom').value}`, 20, 50);
-        doc.text(`Temps total : ${document.getElementById('finalTime').textContent}`, 20, 60);
-        
-        doc.text("--- Analyse ---", 20, 80);
-        doc.text(document.getElementById('analyseText').value, 20, 90);
-        
-        doc.save("Rapport_E32.pdf");
-    }
-</script>
-
+    </script>
 </body>
 </html>
