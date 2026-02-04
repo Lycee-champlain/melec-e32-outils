@@ -4,235 +4,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiche Sécurité B1V/BR - E32 MELEC</title>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <title>Habilitation B1V/BR - E32 MELEC</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
-        .tab { display: none; }
-        .tab.active { display: block; }
-        .tabs { display: flex; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 15px; background: #007cba; color: white; border: none; cursor: pointer; font-size: 16px; }
-        .tab-btn.active { background: #005a87; }
-        .checklist { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin: 10px 0; align-items: center; }
-        .checklist input[type="checkbox"] { transform: scale(1.5); }
-        #signatureCanvas { border: 2px solid #333; background: white; width: 100%; height: 200px; touch-action: none; }
-        .btn { padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px 5px; }
-        .btn:hover { background: #218838; }
-        .btn-danger { background: #dc3545; }
-        .btn-danger:hover { background: #c82333; }
-        .info-box { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 10px 0; }
-        .warning { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .user-info { background: #d1ecf1; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        @media (max-width: 600px) { .tabs { flex-direction: column; } }
+        :root {
+            --primary: #dc2626; /* Rouge Sécurité */
+            --primary-dark: #b91c1c;
+            --secondary: #1e293b;
+            --success: #16a34a;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
+
+        .container { max-width: 800px; margin: 0 auto; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
+
+        .header { background: var(--secondary); color: white; padding: 25px 30px; border-bottom: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
+        .header-title h1 { font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-title p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+        .header-badge { background: var(--primary); padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 14px; }
+
+        .form-section { padding: 30px; border-bottom: 1px solid var(--border); }
+        .section-title { font-size: 18px; font-weight: 700; color: var(--secondary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .section-icon { width: 32px; height: 32px; background: #fee2e2; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+        .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; transition: 0.2s; }
+        .input-group input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1); }
+
+        .checklist { display: flex; flex-direction: column; gap: 12px; }
+        .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; background: #f8fafc; }
+        .check-item:hover { background: #fef2f2; border-color: var(--primary); }
+        .check-item input { margin-top: 3px; accent-color: var(--primary); transform: scale(1.2); }
+        .check-item-content { flex: 1; }
+        .check-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+        .check-desc { font-size: 13px; color: #64748b; }
+
+        .signature-pad { border: 2px dashed var(--border); border-radius: 8px; height: 160px; position: relative; background: #f8fafc; margin-top: 10px; cursor: crosshair; }
+        .signature-pad:hover { background: #fff; border-color: var(--primary); }
+        canvas { width: 100%; height: 100%; }
+        .clear-sig { position: absolute; top: 10px; right: 10px; background: white; border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+        .actions { padding: 30px; background: #f8fafc; text-align: center; }
+        .btn { padding: 14px 28px; border: none; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--secondary); color: white; width: 100%; justify-content: center; }
+        .btn-primary:hover { background: #0f172a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
+        .btn-success { background: var(--success); color: white; }
+
+        @media (max-width: 600px) {
+            .container { border-radius: 0; box-shadow: none; }
+            .header { padding: 20px; }
+        }
     </style>
 </head>
 <body>
-    <h1>🔐 FICHE SÉCURITÉ B1V/BR - E32 MELEC</h1>
 
-    <div class="user-info">
-        <label>Nom : <input type="text" id="nom" placeholder="Votre nom" style="width: 200px;"></label>
-        <label>Prénom : <input type="text" id="prenom" placeholder="Votre prénom" style="width: 200px;"></label>
-        <label>Date auto : <span id="dateHeure"></span></label>
+    <div class="container">
+        <header class="header">
+            <div class="header-title">
+                <h1>Fiche de Sécurité</h1>
+                <p>Habilitation Électrique B1V / BR</p>
+            </div>
+            <div class="header-badge">E32</div>
+        </header>
+
+        <!-- IDENTIFICATION -->
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-icon">1</div>
+                <span>Identification Intervenant</span>
+            </div>
+            <div class="input-group">
+                <label>Nom & Prénom de l'élève</label>
+                <input type="text" id="nomEleve" placeholder="Ex: DUPONT Thomas">
+            </div>
+            <div class="input-group">
+                <label>Chargé de Travaux (Professeur)</label>
+                <input type="text" id="nomProf" value="M. LE PROFESSEUR" readonly style="background:#f1f5f9;">
+            </div>
+            <div class="input-group">
+                <label>Zone d'intervention</label>
+                <select id="zoneIntervention">
+                    <option value="">Sélectionner...</option>
+                    <option>TGBT Atelier</option>
+                    <option>Armoire Machine 1</option>
+                    <option>Coffret Divisionnaire</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- CONSIGNATION -->
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-icon">2</div>
+                <span>Procédure de Consignation</span>
+            </div>
+            <div class="checklist">
+                <label class="check-item">
+                    <input type="checkbox" id="c1">
+                    <div class="check-item-content">
+                        <div class="check-title">1. Séparation</div>
+                        <div class="check-desc">Ouverture du sectionneur / disjoncteur principal.</div>
+                    </div>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="c2">
+                    <div class="check-item-content">
+                        <div class="check-title">2. Condamnation</div>
+                        <div class="check-desc">Pose du cadenas et de l'étiquette de condamnation.</div>
+                    </div>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="c3">
+                    <div class="check-item-content">
+                        <div class="check-title">3. Identification</div>
+                        <div class="check-desc">Vérification que l'ouvrage correspond bien au dossier.</div>
+                    </div>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="c4">
+                    <div class="check-item-content">
+                        <div class="check-title">4. VAT (Vérification d'Absence de Tension)</div>
+                        <div class="check-desc">Test du VAT (autotest) + Mesure + Retest.</div>
+                    </div>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="c5">
+                    <div class="check-item-content">
+                        <div class="check-title">5. Mise à la terre (MALT)</div>
+                        <div class="check-desc">Mise à la terre et en court-circuit (si nécessaire).</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- EPI -->
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-icon">3</div>
+                <span>Équipements de Protection (EPI)</span>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <label class="check-item" style="padding:8px;">
+                    <input type="checkbox" id="epi1"> <span style="font-size:14px; margin-left:8px;">Gants Isolants</span>
+                </label>
+                <label class="check-item" style="padding:8px;">
+                    <input type="checkbox" id="epi2"> <span style="font-size:14px; margin-left:8px;">Écran Facial</span>
+                </label>
+                <label class="check-item" style="padding:8px;">
+                    <input type="checkbox" id="epi3"> <span style="font-size:14px; margin-left:8px;">Tenue Coton</span>
+                </label>
+                <label class="check-item" style="padding:8px;">
+                    <input type="checkbox" id="epi4"> <span style="font-size:14px; margin-left:8px;">Tapis Isolant</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- SIGNATURE -->
+        <div class="form-section" style="border-bottom:none;">
+            <div class="section-title">
+                <div class="section-icon">4</div>
+                <span>Validation & Signature</span>
+            </div>
+            <p style="font-size:13px; color:#64748b; margin-bottom:10px;">Je certifie avoir réalisé toutes les étapes de consignation avant intervention.</p>
+
+            <div class="signature-pad" id="sigContainer">
+                <button class="clear-sig" onclick="clearSignature()">Effacer</button>
+                <canvas id="sigCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="generatePDF()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Valider & Télécharger PDF
+            </button>
+        </div>
     </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab(1)">1. Habilitation</button>
-        <button class="tab-btn" onclick="showTab(2)">2. Analyse Risques</button>
-        <button class="tab-btn" onclick="showTab(3)">3. Signature</button>
-    </div>
-
-    <div id="tab1" class="tab active">
-        <div class="info-box">
-            <h3>🎯 Mon habilitation : B1V + BR</h3>
-            <p><strong>B1V :</strong> Exécutant travaux hors tension BT + Voisinage</p>
-            <p><strong>BR :</strong> Chargé d'intervention (dépannage, raccordement)</p>
-        </div>
-        <h4>✅ Opérations AUTORISÉES :</h4>
-        <div class="checklist">
-            <span>Travaux hors tension BT (&lt;1000V)</span><input type="checkbox" checked disabled>
-        </div>
-        <div class="checklist">
-            <span>Interventions simples (remplacement, raccordement)</span><input type="checkbox" checked disabled>
-        </div>
-        <div class="checklist">
-            <span>Manœuvres (disjoncteurs, contacteurs)</span><input type="checkbox" checked disabled>
-        </div>
-        <div class="checklist">
-            <span>Mesures hors tension (isolement, continuité)</span><input type="checkbox" checked disabled>
-        </div>
-        <h4>❌ Opérations INTERDITES :</h4>
-        <div class="checklist">
-            <span>Consignation (réservée BC)</span><input type="checkbox" disabled>
-        </div>
-        <div class="checklist">
-            <span>Travaux sous tension (B2V)</span><input type="checkbox" disabled>
-        </div>
-    </div>
-
-    <div id="tab2" class="tab">
-        <h3>⚠️ Analyse des risques (10 points)</h3>
-        <div class="checklist">
-            <span>1. Tension de l'installation</span><input type="checkbox" id="r1">
-        </div>
-        <div class="checklist">
-            <span>2. Zone de travail (proximité pièces sous tension)</span><input type="checkbox" id="r2">
-        </div>
-        <div class="checklist">
-            <span>3. État câblage (usure, écrasement)</span><input type="checkbox" id="r3">
-        </div>
-        <div class="checklist">
-            <span>4. Humidité/poussière environnement</span><input type="checkbox" id="r4">
-        </div>
-        <div class="checklist">
-            <span>5. État mécanique (fixations, vibrations)</span><input type="checkbox" id="r5">
-        </div>
-        <div class="checklist">
-            <span>6. EPI disponibles (gants classe 00, lunettes)</span><input type="checkbox" id="r6">
-        </div>
-        <div class="checklist">
-            <span>7. Appareils de mesure conformes/calibrés</span><input type="checkbox" id="r7">
-        </div>
-        <div class="checklist">
-            <span>8. Procédure consignation connue</span><input type="checkbox" id="r8">
-        </div>
-        <div class="checklist">
-            <span>9. Conduite à tenir accident électrique</span><input type="checkbox" id="r9">
-        </div>
-        <div class="checklist">
-            <span>10. Numéros urgence affichés (15/18/112)</span><input type="checkbox" id="r10">
-        </div>
-        <p><strong>Nombre de cases cochées : <span id="riskCount">0</span>/10</strong></p>
-        <button class="btn" onclick="checkRisks()">Vérifier analyse risques</button>
-    </div>
-
-    <div id="tab3" class="tab">
-        <h3>✍️ Signature électronique</h3>
-        <canvas id="signatureCanvas"></canvas>
-        <br>
-        <button class="btn" onclick="clearCanvas()">Effacer signature</button>
-        <button class="btn" onclick="exportPDF()">📄 Exporter PDF signé</button>
-        <div class="warning info-box">
-            <strong>⚠️ ATTENTION :</strong> Signature obligatoire avant intervention !<br>
-            La fiche ne peut être validée sans 100% risques + signature.
-        </div>
-    </div>
-
-    <button class="btn-danger btn" onclick="emergencyStop()" style="margin-top: 20px; width: 100%; font-size: 18px;">
-        🚨 UR GENCE SÉCURITÉ - ARRÊT IMMÉDIAT
-    </button>
 
     <script>
-        // Date/heure auto
-        document.getElementById('dateHeure').textContent = new Date().toLocaleString('fr-FR');
-
-        // Onglets
-        function showTab(n) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab' + n).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // Compteur risques
-        function checkRisks() {
-            let count = 0;
-            for(let i=1; i<=10; i++) {
-                if(document.getElementById('r' + i).checked) count++;
-            }
-            document.getElementById('riskCount').textContent = count;
-            if(count === 10) {
-                alert('✅ Analyse risques COMPLÈTE ! Vous pouvez signer.');
-            } else {
-                alert('⚠️ ' + (10-count) + ' risque(s) à analyser avant signature.');
-            }
-        }
-
-        // Canvas signature
-        const canvas = document.getElementById('signatureCanvas');
+        // Gestion Signature
+        const canvas = document.getElementById('sigCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = 700;
-        canvas.height = 200;
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-
         let isDrawing = false;
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
 
-        function startDrawing(e) {
-            isDrawing = true;
-            draw(e);
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            ctx.scale(ratio, ratio);
+        }
+        window.onresize = resizeCanvas;
+        setTimeout(resizeCanvas, 100);
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-        function draw(e) {
-            if(!isDrawing) return;
-            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-        }
+        ['mousedown', 'touchstart'].forEach(ev => {
+            canvas.addEventListener(ev, (e) => {
+                isDrawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                e.preventDefault();
+            });
+        });
 
-        function stopDrawing() {
-            isDrawing = false;
-            ctx.beginPath();
-        }
+        ['mousemove', 'touchmove'].forEach(ev => {
+            canvas.addEventListener(ev, (e) => {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                e.preventDefault();
+            });
+        });
 
-        function clearCanvas() {
+        ['mouseup', 'touchend'].forEach(ev => {
+            canvas.addEventListener(ev, () => isDrawing = false);
+        });
+
+        function clearSignature() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // Urgence sécurité
-        function emergencyStop() {
-            alert('🚨 ARRÊT IMMÉDIAT INTERVENTION !\n\n' +
-                  '1. Couper alimentation générale\n' +
-                  '2. Alerter professeur\n' +
-                  '3. Ne PAS toucher matériel suspect\n' +
-                  '4. Évacuer zone si danger grave');
-            document.body.style.background = '#ffcccc';
-            setTimeout(() => location.reload(), 5000);
-        }
+        // Génération PDF
+        async function generatePDF() {
+            const nom = document.getElementById('nomEleve').value;
+            if(nom.length < 2) { alert('Nom requis'); return; }
 
-        // Export PDF
-        async function exportPDF() {
-            const nom = document.getElementById('nom').value;
-            const prenom = document.getElementById('prenom').value;
-            if(!nom || !prenom) {
-                alert('⚠️ Saisir nom et prénom avant export !');
-                return;
-            }
+            // Vérif cases
+            const checks = ['c1','c2','c3','c4','c5'].every(id => document.getElementById(id).checked);
+            if(!checks) { alert('Toutes les étapes de consignation doivent être cochées !'); return; }
 
             const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
+            const doc = new jsPDF();
 
-            pdf.setFontSize(20);
-            pdf.text('FICHE SÉCURITÉ B1V/BR SIGNÉE', 20, 20);
-            pdf.setFontSize(12);
-            pdf.text(`Élève : ${prenom} ${nom}`, 20, 35);
-            pdf.text(`Date : ${new Date().toLocaleString('fr-FR')}`, 20, 45);
+            // En-tête Rouge Sécurité
+            doc.setFillColor(220, 38, 38);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text("FICHE DE SÉCURITÉ B1V", 20, 20);
 
-            pdf.text('Analyse risques : OK', 20, 60);
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(14);
+            doc.text(`Intervenant : ${nom}`, 20, 50);
+            doc.text(`Zone : ${document.getElementById('zoneIntervention').value}`, 20, 60);
+            doc.text(`Date : ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 20, 70);
 
-            // Canvas signature
-            const canvasData = canvas.toDataURL('image/png');
-            pdf.addImage(canvasData, 'PNG', 20, 70, 160, 50);
+            doc.setDrawColor(0);
+            doc.line(20, 80, 190, 80);
 
-            pdf.text('Signature valide - Intervention autorisée', 20, 140);
+            doc.setFontSize(16);
+            doc.text("CONSIGNATION VALIDÉE", 20, 100);
+            doc.setFontSize(12);
+            doc.text("1. Séparation : OK", 20, 115);
+            doc.text("2. Condamnation : OK", 20, 125);
+            doc.text("3. Identification : OK", 20, 135);
+            doc.text("4. VAT : OK", 20, 145);
+            doc.text("5. Mise à la terre : OK", 20, 155);
 
-            pdf.save(`Fiche_Securite_${nom}_${prenom}_${Date.now()}.pdf`);
+            // Signature Image
+            const imgData = canvas.toDataURL('image/png');
+            doc.text("Signature :", 120, 170);
+            doc.addImage(imgData, 'PNG', 120, 180, 60, 40);
+
+            doc.save(`Fiche_Securite_${nom.replace(/ /g,'_')}.pdf`);
         }
-
-        // Local storage
-        window.onload = () => {
-            document.getElementById('nom').value = localStorage.getItem('nom') || '';
-            document.getElementById('prenom').value = localStorage.getItem('prenom') || '';
-        };
-
-        document.getElementById('nom').onchange = (e) => localStorage.setItem('nom', e.target.value);
-        document.getElementById('prenom').onchange = (e) => localStorage.setItem('prenom', e.target.value);
     </script>
 </body>
 </html>
