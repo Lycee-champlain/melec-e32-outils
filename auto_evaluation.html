@@ -1,229 +1,136 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto-évaluation E32 MELEC</title>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <title>Auto-Évaluation E32</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden; }
-        .header { background: linear-gradient(45deg, #2d3436, #636e72); color: white; padding: 40px; text-align: center; }
-        .section { padding: 30px; border-bottom: 1px solid #eee; }
-        .section:last-child { border-bottom: none; }
-        .competence { margin: 25px 0; padding: 20px; background: #f8f9fa; border-radius: 12px; border-left: 6px solid #007cba; }
-        .scale { display: flex; justify-content: space-between; margin: 20px 0; background: white; padding: 20px; border-radius: 10px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); }
-        .scale-level { text-align: center; cursor: pointer; padding: 10px; border-radius: 8px; transition: all 0.3s; font-weight: bold; }
-        .scale-level:hover { background: #e9ecef; }
-        .scale-level.selected { background: #007cba; color: white; transform: scale(1.1); }
-        .video-help { background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
-        .qr-container { text-align: center; margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 12px; }
-        .btn { padding: 15px 30px; background: linear-gradient(45deg, #00b894, #00cec9); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: bold; margin: 10px; transition: all 0.3s; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,184,148,0.3); }
-        .btn-warning { background: linear-gradient(45deg, #fdcb6e, #e17055); }
-        .prof-grid { background: #e8f5e8; padding: 25px; margin-top: 20px; border-radius: 12px; }
-        .qr-code { margin: 20px auto; }
-        @media (max-width: 768px) { .scale { flex-direction: column; gap: 10px; } }
+        :root { --primary: #2563eb; --success: #10b981; --dark: #0f172a; --light: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--light); color: #334155; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        
+        .header { background: var(--dark); color: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; font-weight: 700; }
+        .score-box { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 10px; text-align: center; }
+        .score-val { font-size: 28px; font-weight: 800; color: #facc15; }
+
+        .competence-group { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .group-title { font-size: 18px; font-weight: 700; color: var(--dark); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        .criteria { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; border-radius: 8px; transition: 0.2s; }
+        .criteria:hover { background: #f1f5f9; }
+        .label { flex: 1; font-weight: 500; font-size: 15px; }
+        
+        .radio-group { display: flex; gap: 5px; background: #e2e8f0; padding: 4px; border-radius: 8px; }
+        .radio-group label { cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #64748b; transition: 0.2s; }
+        .radio-group input { display: none; }
+        .radio-group input:checked + label { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        /* Couleurs specifiques pour les niveaux */
+        .radio-group input[value="0"]:checked + label { color: #ef4444; } /* TI */
+        .radio-group input[value="1"]:checked + label { color: #f59e0b; } /* I */
+        .radio-group input[value="2"]:checked + label { color: #3b82f6; } /* S */
+        .radio-group input[value="3"]:checked + label { color: #10b981; } /* TS */
+
+        .btn-save { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .btn-save:hover { background: #1d4ed8; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 AUTO-ÉVALUATION E32 MAINTENANCE</h1>
-            <p>BAC PRO MELEC - Après chaque partie de la séquence</p>
-            <div style="margin-top: 20px;">
-                <strong>Nom : </strong><input type="text" id="nomEval" style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ddd;">
-                <strong>Partie : </strong>
-                <select id="partie">
-                    <option>1 - Préventive</option>
-                    <option>2 - Corrective</option>
-                    <option>3 - Épreuve</option>
-                </select>
+
+<div class="header">
+    <div>
+        <h1>📊 Auto-Évaluation E32</h1>
+        <p style="opacity:0.8; margin-top:5px;">Compétences BAC PRO MELEC</p>
+    </div>
+    <div class="score-box">
+        <div style="font-size:12px; text-transform:uppercase;">Note Estimée</div>
+        <div class="score-val" id="totalScore">--/20</div>
+    </div>
+</div>
+
+<form id="evalForm">
+    <!-- C1 : PRÉPARER -->
+    <div class="competence-group">
+        <div class="group-title">C1 : PRÉPARER (Analyse & Diagnostic)</div>
+        
+        <div class="criteria">
+            <div class="label">C1-1 : Analyser le dossier technique</div>
+            <div class="radio-group">
+                <input type="radio" name="c1_1" id="c1_1_0" value="0"><label for="c1_1_0">TI</label>
+                <input type="radio" name="c1_1" id="c1_1_1" value="1"><label for="c1_1_1">I</label>
+                <input type="radio" name="c1_1" id="c1_1_2" value="2"><label for="c1_1_2">S</label>
+                <input type="radio" name="c1_1" id="c1_1_3" value="3"><label for="c1_1_3">TS</label>
             </div>
         </div>
 
-        <div class="section">
-            <h2>🎯 Évaluation des compétences C10-C13</h2>
-
-            <div class="competence">
-                <h3>C10 - Maintenance préventive</h3>
-                <div class="scale">
-                    <div class="scale-level" data-value="1" onclick="selectLevel(this)">1<br>Besoin aide totale</div>
-                    <div class="scale-level" data-value="2" onclick="selectLevel(this)">2<br>Fiche nécessaire</div>
-                    <div class="scale-level" data-value="3" onclick="selectLevel(this)">3<br>Autonome valeurs</div>
-                    <div class="scale-level" data-value="4" onclick="selectLevel(this)">4<br>Maîtrise complète</div>
-                </div>
-                <div class="video-help" id="helpC10">
-                    <strong>📺 Aide vidéo :</strong> <a href="#" target="_blank">Maintenance préventive coffret</a>
-                </div>
+        <div class="criteria">
+            <div class="label">C1-2 : Identifier les risques (Sécurité)</div>
+            <div class="radio-group">
+                <input type="radio" name="c1_2" id="c1_2_0" value="0"><label for="c1_2_0">TI</label>
+                <input type="radio" name="c1_2" id="c1_2_1" value="1"><label for="c1_2_1">I</label>
+                <input type="radio" name="c1_2" id="c1_2_2" value="2"><label for="c1_2_2">S</label>
+                <input type="radio" name="c1_2" id="c1_2_3" value="3"><label for="c1_2_3">TS</label>
             </div>
-
-            <div class="competence">
-                <h3>C11 - Maintenance corrective</h3>
-                <div class="scale">
-                    <div class="scale-level" data-value="1" onclick="selectLevel(this)">1<br>Perdu symptômes</div>
-                    <div class="scale-level" data-value="2" onclick="selectLevel(this)">2<br>Diagnostic guidé</div>
-                    <div class="scale-level" data-value="3" onclick="selectLevel(this)">3<br>Diagnostic fiable</div>
-                    <div class="scale-level" data-value="4" onclick="selectLevel(this)">4<br>Rapidité + fiabilité</div>
-                </div>
-                <div class="video-help" id="helpC11">
-                    <strong>📺 Aide vidéo :</strong> <a href="#" target="_blank">Diagnostic panne méthodique</a>
-                </div>
-            </div>
-
-            <div class="competence">
-                <h3>C12 - Communication sécurité</h3>
-                <div class="scale">
-                    <div class="scale-level" data-value="1" onclick="selectLevel(this)">1<br>Oublie sécurité</div>
-                    <div class="scale-level" data-value="2" onclick="selectLevel(this)">2<br>Rappels nécessaires</div>
-                    <div class="scale-level" data-value="3" onclick="selectLevel(this)">3<br>Sécurité systématique</div>
-                    <div class="scale-level" data-value="4" onclick="selectLevel(this)">4<br>Exemplaire B1V/BR</div>
-                </div>
-            </div>
-
-            <div class="competence">
-                <h3>C13 - Traçabilité</h3>
-                <div class="scale">
-                    <div class="scale-level" data-value="1" onclick="selectLevel(this)">1<br>Fiche incomplète</div>
-                    <div class="scale-level" data-value="2" onclick="selectLevel(this)">2<br>Basique</div>
-                    <div class="scale-level" data-value="3" onclick="selectLevel(this)">3<br>Complet + photos</div>
-                    <div class="scale-level" data-value="4" onclick="selectLevel(this)">4<br>Professionnel</div>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-                <h3>Moyenne compétences : <span id="moyenne">0</span>/4</h3>
-                <div id="niveauGlobal"></div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>📝 Commentaires libres</h2>
-            <textarea id="commentaires" placeholder="Ce qui s'est bien passé... Ce qui peut être amélioré... Questions..." style="width:100%; height:120px; padding:20px; border:2px solid #ddd; border-radius:12px; font-size:16px; resize:vertical;"></textarea>
-        </div>
-
-        <div class="section prof-grid">
-            <h2>👨‍🏫 GRILLE PROFESSEUR (QR Code)</h2>
-            <div class="qr-container">
-                <div id="qrCode" class="qr-code"></div>
-                <p>Scanner pour saisir notes prof depuis smartphone</p>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
-                <div>Observation sécurité : <select><option>Parfait</option><option>Attention</option><option>Critique</option></select></div>
-                <div>Autonomie : <select><option>Guidé</option><option>Semi</option><option>Autonome</option></select></div>
-                <div>Note globale : <input type="number" min="0" max="20"></div>
-            </div>
-        </div>
-
-        <div style="text-align: center; padding: 40px;">
-            <button class="btn" onclick="saveEvaluation()">💾 Sauvegarder évaluation</button>
-            <button class="btn btn-warning" onclick="exportPDF()">📄 Exporter PDF complet</button>
-            <button class="btn" onclick="resetEvaluation()">🔄 Nouvelle évaluation</button>
         </div>
     </div>
 
-    <script>
-        const competences = ['C10', 'C11', 'C12', 'C13'];
-        let scores = {};
+    <!-- C2 : RÉALISER -->
+    <div class="competence-group">
+        <div class="group-title">C2 : RÉALISER (Intervention)</div>
+        
+        <div class="criteria">
+            <div class="label">C2-1 : Mettre en sécurité (Consignation)</div>
+            <div class="radio-group">
+                <input type="radio" name="c2_1" id="c2_1_0" value="0"><label for="c2_1_0">TI</label>
+                <input type="radio" name="c2_1" id="c2_1_1" value="1"><label for="c2_1_1">I</label>
+                <input type="radio" name="c2_1" id="c2_1_2" value="2"><label for="c2_1_2">S</label>
+                <input type="radio" name="c2_1" id="c2_1_3" value="3"><label for="c2_1_3">TS</label>
+            </div>
+        </div>
 
-        function selectLevel(el) {
-            const comp = el.parentElement.parentElement.querySelector('h3').textContent;
-            const value = parseInt(el.dataset.value);
+        <div class="criteria">
+            <div class="label">C2-4 : Réparer / Remplacer l'élément</div>
+            <div class="radio-group">
+                <input type="radio" name="c2_4" id="c2_4_0" value="0"><label for="c2_4_0">TI</label>
+                <input type="radio" name="c2_4" id="c2_4_1" value="1"><label for="c2_4_1">I</label>
+                <input type="radio" name="c2_4" id="c2_4_2" value="2"><label for="c2_4_2">S</label>
+                <input type="radio" name="c2_4" id="c2_4_3" value="3"><label for="c2_4_3">TS</label>
+            </div>
+        </div>
+    </div>
 
-            // Désélectionner autres dans même échelle
-            el.parentElement.querySelectorAll('.scale-level').forEach(l => l.classList.remove('selected'));
-            el.classList.add('selected');
+    <button type="button" class="btn-save" onclick="calculerNote()">Calculer ma note & Exporter PDF</button>
+</form>
 
-            scores[comp] = value;
-            updateMoyenne();
-
-            // Aide vidéo si < 3
-            if(value < 3) {
-                const helpId = 'help' + comp;
-                document.getElementById(helpId).style.display = 'block';
-            }
-        }
-
-        function updateMoyenne() {
-            const total = Object.values(scores).reduce((a,b) => a+b, 0);
-            const moyenne = total / competences.length;
-            document.getElementById('moyenne').textContent = moyenne.toFixed(1);
-
-            const niveauEl = document.getElementById('niveauGlobal');
-            if(moyenne >= 3.5) {
-                niveauEl.innerHTML = '<div style="background:#d4edda;color:#155724;padding:15px;border-radius:10px;font-weight:bold;">🚀 AUTONOME - Prêt épreuve !</div>';
-            } else if(moyenne >= 2.5) {
-                niveauEl.innerHTML = '<div style="background:#fff3cd;color:#856404;padding:15px;border-radius:10px;font-weight:bold;">📚 SEMI-AUTONOME - Consolidation</div>';
-            } else {
-                niveauEl.innerHTML = '<div style="background:#f8d7da;color:#721c24;padding:15px;border-radius:10px;font-weight:bold;">👶 GUIDÉ - Travail approfondi</div>';
-            }
-        }
-
-        function saveEvaluation() {
-            localStorage.setItem('e32_eval_' + Date.now(), JSON.stringify({
-                nom: document.getElementById('nomEval').value,
-                partie: document.getElementById('partie').value,
-                scores: scores,
-                commentaires: document.getElementById('commentaires').value,
-                date: new Date().toISOString()
-            }));
-            alert('💾 Évaluation sauvegardée !');
-        }
-
-        function resetEvaluation() {
-            scores = {};
-            document.querySelectorAll('.scale-level').forEach(l => l.classList.remove('selected'));
-            document.getElementById('moyenne').textContent = '0';
-            document.getElementById('commentaires').value = '';
-            document.getElementById('niveauGlobal').innerHTML = '';
-        }
-
-        async function exportPDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-
-            pdf.setFontSize(22);
-            pdf.text('AUTO-ÉVALUATION E32 MELEC', 20, 25);
-
-            pdf.setFontSize(14);
-            pdf.text(`Élève : ${document.getElementById('nomEval').value}`, 20, 45);
-            pdf.text(`Partie : ${document.getElementById('partie').value}`, 20, 55);
-            pdf.text(`Moyenne : ${document.getElementById('moyenne').textContent}/4`, 20, 65);
-
-            let y = 85;
-            for(let comp of competences) {
-                pdf.text(`${comp} : ${scores[comp] || 0}/4`, 20, y);
-                y += 10;
-            }
-
-            pdf.text('Commentaires :', 20, y);
-            y += 10;
-            pdf.text(document.getElementById('commentaires').value.substring(0,100) + '...', 20, y);
-
-            pdf.save('AutoEvaluation_E32.pdf');
-        }
-
-        // QR Code grille prof
-        QRCode.toCanvas(document.getElementById('qrCode'), 'https://your-school-link/e32-prof-grid', {
-            width: 200,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-            }
-        }, function (error) {
-            if (error) console.error(error);
+<script>
+    function calculerNote() {
+        const inputs = document.querySelectorAll('input[type="radio"]:checked');
+        let total = 0;
+        let count = 0;
+        
+        inputs.forEach(input => {
+            let val = parseInt(input.value);
+            // Pondération simple : TI=0, I=2, S=4, TS=5 (sur 5pts par item)
+            if(val === 1) total += 2;
+            if(val === 2) total += 4;
+            if(val === 3) total += 5;
+            count++;
         });
 
-        // Load saved
-        window.onload = () => {
-            const nom = localStorage.getItem('nomEval') || '';
-            document.getElementById('nomEval').value = nom;
-        };
-    </script>
+        // Projection sur 20 (si 4 items max = 20pts)
+        // Ici on a mis 4 critères pour l'exemple
+        let note = total;
+        document.getElementById('totalScore').textContent = note + "/20";
+        
+        if(confirm("Note calculée : " + note + "/20. Voulez-vous télécharger le PDF ?")) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text(`Auto-Évaluation E32 - Note : ${note}/20`, 20, 20);
+            doc.save("Evaluation_E32.pdf");
+        }
+    }
+</script>
 </body>
 </html>
